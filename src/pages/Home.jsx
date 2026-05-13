@@ -38,7 +38,7 @@ function filterProps(props, f) {
 export default function Home() {
   const navigate = useNavigate()
   const [filtered, setFiltered] = useState(ALL)
-  const [view, setView]         = useState('list')   // 'list' | 'map'
+  const [view, setView]         = useState('split')  // 'split' | 'list' | 'map'
   const [dealTab, setDealTab]   = useState('all')
   const [cityTab, setCityTab]   = useState('all')
   const [hoveredId, setHoveredId] = useState(null)
@@ -140,17 +140,17 @@ export default function Home() {
                   <strong className="text-gray-800">{filtered.length}</strong> results
                 </span>
 
-                {/* List / Map toggle — Bayut style */}
+                {/* View toggle */}
                 <div className="flex rounded-lg overflow-hidden border border-gray-200">
-                  <button onClick={() => setView('list')}
-                    className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold transition-all
-                      ${view === 'list' ? 'bg-primary text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}>
-                    <i className="fas fa-th-large text-xs" /> List
+                  <button onClick={() => setView('split')}
+                    className={`flex items-center gap-2 px-3 py-2 text-sm font-semibold transition-all
+                      ${view === 'split' ? 'bg-primary text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}>
+                    <i className="fas fa-columns text-xs" /> Map
                   </button>
-                  <button onClick={() => setView('map')}
-                    className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold transition-all border-l border-gray-200
-                      ${view === 'map' ? 'bg-primary text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}>
-                    <i className="fas fa-map text-xs" /> Map
+                  <button onClick={() => setView('list')}
+                    className={`flex items-center gap-2 px-3 py-2 text-sm font-semibold transition-all border-l border-gray-200
+                      ${view === 'list' ? 'bg-primary text-white' : 'bg-white text-gray-500 hover:bg-gray-50'}`}>
+                    <i className="fas fa-th-large text-xs" /> Grid
                   </button>
                 </div>
               </div>
@@ -158,47 +158,35 @@ export default function Home() {
           </div>
         </div>
 
-        {/* BAYUT MAP VIEW — full screen map + floating side panel */}
-        {view === 'map' && (
-          <div className="relative" style={{height:'calc(100vh - 113px)'}}>
-            {/* Full map */}
-            <PropertyMap
-              properties={filtered}
-              hoveredId={hoveredId}
-              onMarkerClick={handleMarkerClick}
-              className="absolute inset-0 w-full h-full"
-            />
-
-            {/* Floating results panel — right side, Bayut-style */}
-            <div
-              ref={listRef}
-              className="absolute top-4 right-4 bottom-4 w-80 bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-gray-100"
-            >
-              <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between flex-shrink-0">
-                <span className="font-semibold text-sm text-gray-800">
-                  {filtered.length} properties
-                </span>
-                <button onClick={() => setView('list')}
-                  className="text-xs text-primary font-semibold hover:underline flex items-center gap-1">
-                  <i className="fas fa-th-large text-xs" /> Grid view
-                </button>
-              </div>
-              <div className="flex-1 overflow-y-auto hide-scrollbar p-3 space-y-3">
-                {filtered.length === 0 ? (
-                  <div className="text-center py-12 text-gray-400">
-                    <i className="fas fa-search text-3xl mb-3 block" />
-                    <p className="font-semibold text-sm">No properties found</p>
-                    <button onClick={() => { setFiltered(ALL); setDealTab('all'); setCityTab('all') }}
-                      className="mt-3 text-primary text-xs font-semibold hover:underline">Clear filters</button>
+        {/* IMMOSCOUT SPLIT VIEW — scrollable list left, sticky map right */}
+        {view === 'split' && (
+          <div className="flex max-w-screen-2xl mx-auto" style={{height:'calc(100vh - 113px)'}}>
+            {/* Left: scrollable cards */}
+            <div ref={listRef} className="w-full lg:w-[480px] xl:w-[520px] flex-shrink-0 overflow-y-auto hide-scrollbar p-4 space-y-3">
+              {filtered.length === 0 ? (
+                <div className="text-center py-16 text-gray-400">
+                  <i className="fas fa-search text-3xl mb-3 block" />
+                  <p className="font-semibold">No properties match your search</p>
+                  <button onClick={() => { setFiltered(ALL); setDealTab('all'); setCityTab('all') }}
+                    className="mt-3 text-primary text-sm font-semibold hover:underline">Clear filters</button>
+                </div>
+              ) : (
+                filtered.map(p => (
+                  <div key={p.id} data-pid={p.id}>
+                    <PropertyCard p={p} view="list" onHover={handleHover} highlighted={hoveredId === p.id} />
                   </div>
-                ) : (
-                  filtered.map(p => (
-                    <div key={p.id} data-pid={p.id}>
-                      <PropertyCard p={p} view="list" onHover={handleHover} highlighted={hoveredId === p.id} />
-                    </div>
-                  ))
-                )}
-              </div>
+                ))
+              )}
+            </div>
+
+            {/* Right: sticky map */}
+            <div className="flex-1 sticky top-[113px] h-[calc(100vh-113px)] hidden lg:block">
+              <PropertyMap
+                properties={filtered}
+                hoveredId={hoveredId}
+                onMarkerClick={handleMarkerClick}
+                className="w-full h-full"
+              />
             </div>
           </div>
         )}
