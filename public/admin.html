@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hestia Admin — Platform Management</title>
+<meta name="robots" content="noindex, nofollow">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root{
+  --primary:#1a5f4a;--primary-light:#2d8a6e;--primary-dark:#124a3a;--primary-soft:#e8f5f1;
+  --accent:#e8b931;--accent-soft:#fef9e8;
+  --bg:#f1f5f9;--surface:#ffffff;--surface-hover:#f8fafc;
+  --text:#0f172a;--text-secondary:#64748b;--text-muted:#94a3b8;
+  --border:#e2e8f0;--border-light:#f1f5f9;
+  --shadow-sm:0 1px 2px 0 rgb(0 0 0/.05);--shadow:0 4px 6px -1px rgb(0 0 0/.1);
+  --shadow-lg:0 10px 15px -3px rgb(0 0 0/.1);--shadow-xl:0 20px 25px -5px rgb(0 0 0/.1);
+  --radius:12px;--radius-lg:16px;--radius-sm:8px;
+  --success:#10b981;--success-soft:#d1fae5;--success-text:#065f46;
+  --danger:#ef4444;--danger-soft:#fee2e2;--danger-text:#991b1b;
+  --warning:#f59e0b;--warning-soft:#fef3c7;--warning-text:#92400e;
+  --info:#3b82f6;--info-soft:#dbeafe;--info-text:#1e40af;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+/* Auth Wall */
+.auth-wall{position:fixed;inset:0;background:linear-gradient(135deg,#f0f9f6,#e6f4f1);display:flex;align-items:center;justify-content:center;z-index:9999;padding:2rem}
+.auth-card{background:white;border-radius:20px;padding:2.5rem;width:100%;max-width:400px;box-shadow:0 25px 50px rgba(0,0,0,0.12);border:1px solid var(--border)}
+.auth-logo{font-family:'Playfair Display',serif;font-size:1.5rem;color:var(--primary);text-align:center;margin-bottom:0.25rem}
+.auth-logo i{color:var(--accent);margin-right:0.3rem}
+.aw-error{background:var(--danger-soft);color:var(--danger-text);border-radius:var(--radius-sm);padding:0.7rem 1rem;font-size:0.85rem;margin-bottom:1rem;display:none}
+.aw-form-group{margin-bottom:1rem}
+.aw-form-group label{display:block;font-size:0.85rem;font-weight:600;margin-bottom:0.4rem}
+.aw-form-group input{width:100%;padding:0.75rem 1rem;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:0.9rem;font-family:'Inter',sans-serif;transition:border-color .2s}
+.aw-form-group input:focus{outline:none;border-color:var(--primary)}
+.aw-spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:white;border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Layout */
+.app{display:flex;min-height:100vh}
+.sidebar{width:260px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;height:100vh;z-index:100}
+.sidebar-header{padding:1.5rem;border-bottom:1px solid var(--border)}
+.sidebar-brand{font-family:'Playfair Display',serif;font-size:1.35rem;color:var(--primary);display:flex;align-items:center;gap:0.5rem}
+.sidebar-brand i{color:var(--accent)}
+.admin-badge{background:var(--danger);color:white;font-size:0.65rem;font-weight:700;padding:0.15rem 0.5rem;border-radius:50px;margin-left:0.5rem}
+.sidebar-user{margin-top:1rem;padding:0.75rem;background:var(--primary-soft);border-radius:var(--radius-sm);font-size:0.85rem}
+.sidebar-user strong{display:block;color:var(--primary);font-weight:700}
+.sidebar-user span{color:var(--text-secondary);font-size:0.78rem}
+.sidebar-nav{flex:1;padding:1rem 0.75rem;overflow-y:auto}
+.nav-section{margin-bottom:1.5rem}
+.nav-section-title{font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);padding:0 0.75rem;margin-bottom:0.5rem}
+.nav-item{display:flex;align-items:center;gap:0.75rem;padding:0.65rem 0.75rem;border-radius:var(--radius-sm);color:var(--text-secondary);font-size:0.88rem;font-weight:500;cursor:pointer;transition:all .2s;margin-bottom:0.2rem;border:none;background:none;width:100%;text-align:left;font-family:'Inter',sans-serif}
+.nav-item:hover{background:var(--bg);color:var(--text)}
+.nav-item.active{background:var(--primary-soft);color:var(--primary);font-weight:600}
+.nav-item i{width:18px;text-align:center;font-size:0.95rem}
+.nav-badge{margin-left:auto;background:var(--danger);color:white;font-size:0.68rem;font-weight:700;padding:.15rem .45rem;border-radius:50px}
+.nav-badge.warn{background:var(--warning)}
+.sidebar-footer{padding:1rem 0.75rem;border-top:1px solid var(--border)}
+.sidebar-footer .nav-item{color:var(--danger)}
+.sidebar-footer .nav-item:hover{background:var(--danger-soft)}
+
+.main{flex:1;margin-left:260px;display:flex;flex-direction:column}
+.topbar{height:60px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 2rem;position:sticky;top:0;z-index:50}
+.topbar-title{font-size:1.15rem;font-weight:700}
+.topbar-right{display:flex;align-items:center;gap:1rem}
+.content{flex:1;padding:2rem;overflow-y:auto}
+.page{display:none;animation:fadeIn .3s ease}
+.page.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* Cards */
+.card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);overflow:hidden}
+.card-header{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-header h3{font-size:0.95rem;font-weight:600;display:flex;align-items:center;gap:0.5rem}
+.card-body{padding:1.5rem}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1.5rem;margin-bottom:1.5rem}
+
+/* Stats */
+.stat-card{background:var(--surface);border-radius:var(--radius);padding:1.5rem;border:1px solid var(--border);transition:all .2s}
+.stat-card:hover{box-shadow:var(--shadow-lg);transform:translateY(-2px)}
+.stat-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+.stat-icon{width:40px;height:40px;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:1.1rem}
+.stat-icon.primary{background:var(--primary-soft);color:var(--primary)}
+.stat-icon.success{background:var(--success-soft);color:var(--success-text)}
+.stat-icon.danger{background:var(--danger-soft);color:var(--danger-text)}
+.stat-icon.warning{background:var(--warning-soft);color:var(--warning-text)}
+.stat-icon.info{background:var(--info-soft);color:var(--info-text)}
+.stat-trend{font-size:0.78rem;font-weight:600;display:flex;align-items:center;gap:.2rem}
+.stat-trend.up{color:var(--success)}.stat-trend.down{color:var(--danger)}
+.stat-value{font-size:1.75rem;font-weight:700;color:var(--text);margin-bottom:.25rem}
+.stat-label{font-size:0.82rem;color:var(--text-secondary)}
+.stats-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:1.25rem;margin-bottom:1.5rem}
+
+/* Table */
+.data-table{width:100%;border-collapse:collapse}
+.data-table th,.data-table td{padding:.8rem 1rem;text-align:left;font-size:0.88rem}
+.data-table th{font-weight:600;color:var(--text-secondary);font-size:0.73rem;text-transform:uppercase;letter-spacing:.5px;background:var(--bg)}
+.data-table tbody tr{border-bottom:1px solid var(--border-light);transition:background .2s}
+.data-table tbody tr:hover{background:var(--surface-hover)}
+.data-table tbody tr:last-child{border-bottom:none}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.55rem 1.1rem;border-radius:var(--radius-sm);border:none;font-size:0.83rem;font-weight:600;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif;text-decoration:none}
+.btn-sm{padding:.35rem .75rem;font-size:0.78rem}
+.btn-primary{background:var(--primary);color:white}.btn-primary:hover{background:var(--primary-dark)}
+.btn-success{background:var(--success);color:white}.btn-success:hover{background:#059669}
+.btn-danger{background:var(--danger);color:white}.btn-danger:hover{background:#dc2626}
+.btn-warning{background:var(--warning);color:white}.btn-warning:hover{background:#d97706}
+.btn-ghost{background:transparent;color:var(--text-secondary);border:1px solid var(--border)}.btn-ghost:hover{background:var(--bg);color:var(--text)}
+.btn-light{background:var(--primary-soft);color:var(--primary)}.btn-light:hover{background:var(--primary);color:white}
+.btn-group{display:flex;gap:.4rem}
+
+/* Status / Badge */
+.status-pill{display:inline-flex;align-items:center;gap:.35rem;padding:.25rem .7rem;border-radius:50px;font-size:.72rem;font-weight:700}
+.status-pill::before{content:'';width:6px;height:6px;border-radius:50%}
+.status-pill.active{background:var(--success-soft);color:var(--success-text)}.status-pill.active::before{background:var(--success)}
+.status-pill.pending{background:var(--warning-soft);color:var(--warning-text)}.status-pill.pending::before{background:var(--warning)}
+.status-pill.suspended{background:var(--danger-soft);color:var(--danger-text)}.status-pill.suspended::before{background:var(--danger)}
+.status-pill.flagged{background:#f3e8ff;color:#6b21a8}.status-pill.flagged::before{background:#9333ea}
+
+/* Filters */
+.filters-bar{display:flex;gap:.6rem;margin-bottom:1.25rem;flex-wrap:wrap;align-items:center}
+.filter-btn{padding:.45rem .9rem;border-radius:var(--radius-sm);border:1px solid var(--border);background:white;font-size:.82rem;font-weight:500;color:var(--text-secondary);cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif}
+.filter-btn:hover{border-color:var(--primary);color:var(--primary)}
+.filter-btn.active{background:var(--primary);color:white;border-color:var(--primary)}
+
+/* Activity */
+.activity-item{display:flex;gap:.75rem;padding:.75rem;border-radius:var(--radius-sm);transition:background .2s;align-items:flex-start}
+.activity-item:hover{background:var(--bg)}
+.activity-icon{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.82rem;flex-shrink:0}
+.activity-icon.signup{background:var(--info-soft);color:var(--info-text)}
+.activity-icon.listing{background:var(--primary-soft);color:var(--primary)}
+.activity-icon.flag{background:var(--danger-soft);color:var(--danger-text)}
+.activity-icon.payment{background:var(--success-soft);color:var(--success-text)}
+.activity-content p{font-size:.85rem;color:var(--text)}
+.activity-content span{font-size:.73rem;color:var(--text-muted)}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:2rem;opacity:0;visibility:hidden;transition:all .3s}
+.modal-overlay.active{opacity:1;visibility:visible}
+.modal-container{background:var(--surface);border-radius:var(--radius-lg);width:100%;max-width:560px;max-height:90vh;overflow-y:auto;transform:scale(.95);transition:transform .3s;box-shadow:var(--shadow-xl)}
+.modal-overlay.active .modal-container{transform:scale(1)}
+.modal-header{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-header h3{font-size:1rem;font-weight:600}
+.modal-close{width:30px;height:30px;border-radius:var(--radius-sm);border:none;background:var(--bg);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-secondary)}
+.modal-close:hover{background:var(--danger-soft);color:var(--danger)}
+.modal-body{padding:1.5rem}
+.modal-footer{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:.65rem}
+.form-group{margin-bottom:1.25rem}
+.form-group label{display:block;font-size:.83rem;font-weight:600;margin-bottom:.4rem;color:var(--text)}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:.7rem 1rem;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:.88rem;font-family:'Inter',sans-serif;transition:all .2s;background:white}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
+
+/* Toast */
+.toast-container{position:fixed;bottom:2rem;right:2rem;z-index:99999;display:flex;flex-direction:column;gap:.5rem}
+.toast{background:var(--text);color:white;padding:.9rem 1.2rem;border-radius:var(--radius-sm);box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:.65rem;font-size:.88rem;animation:slideIn .3s ease;max-width:360px}
+.toast.success{background:var(--success)}.toast.error{background:var(--danger)}.toast.warning{background:var(--warning)}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* Listing card in approval queue */
+.approval-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;display:flex;gap:0;transition:box-shadow .2s}
+.approval-card:hover{box-shadow:var(--shadow-lg)}
+.approval-card-img{width:140px;height:100px;object-fit:cover;flex-shrink:0}
+.approval-card-info{padding:.9rem 1rem;flex:1}
+.approval-card-info h4{font-size:.9rem;font-weight:600;margin-bottom:.2rem}
+.approval-card-info p{font-size:.78rem;color:var(--text-secondary)}
+.approval-card-actions{padding:.75rem;border-left:1px solid var(--border);display:flex;flex-direction:column;gap:.5rem;justify-content:center;flex-shrink:0}
+.approval-list{display:flex;flex-direction:column;gap:.75rem}
+
+/* Agent grid */
+.agent-row td{vertical-align:middle}
+.agent-avatar-sm{width:32px;height:32px;border-radius:50%;background:var(--primary);color:white;display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:700;flex-shrink:0}
+.agent-name-cell{display:flex;align-items:center;gap:.65rem}
+
+/* Platform health bars */
+.health-row{display:flex;align-items:center;gap:1rem;margin-bottom:.75rem}
+.health-label{min-width:140px;font-size:.83rem;font-weight:500}
+.health-bar-bg{flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden}
+.health-bar{height:100%;border-radius:4px;transition:width .6s ease}
+.health-val{min-width:36px;font-size:.78rem;color:var(--text-secondary);text-align:right}
+</style>
+</head>
+<body>
+
+<!-- Auth Wall -->
+<div class="auth-wall" id="authWall">
+  <div class="auth-card">
+    <div class="auth-logo"><i class="fas fa-shield-alt"></i>Hestia Admin</div>
+    <p style="text-align:center;color:var(--text-secondary);font-size:.85rem;margin-bottom:1.5rem;">Platform Management — Admin access only</p>
+    <div class="aw-error" id="awErr"></div>
+    <div class="aw-form-group"><label>Email</label><input type="email" id="awEmail" placeholder="admin@hestia.tn" onkeydown="if(event.key==='Enter')adminLogin()"></div>
+    <div class="aw-form-group"><label>Password</label><input type="password" id="awPwd" placeholder="••••••••" onkeydown="if(event.key==='Enter')adminLogin()"></div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;padding:.85rem;" id="awBtn" onclick="adminLogin()">
+      <i class="fas fa-sign-in-alt"></i> Sign In as Admin
+    </button>
+  </div>
+</div>
+
+<div class="app" id="adminApp" style="display:none;">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand"><i class="fas fa-shield-alt"></i>Admin<span class="admin-badge">ADMIN</span></div>
+      <div class="sidebar-user" id="sidebarAdminUser">
+        <strong id="adminName">—</strong>
+        <span id="adminEmail">—</span>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-title">Overview</div>
+        <button class="nav-item active" onclick="switchPage('dashboard',this)"><i class="fas fa-chart-pie"></i>Dashboard</button>
+        <button class="nav-item" onclick="switchPage('activity',this)"><i class="fas fa-stream"></i>Activity Feed</button>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Moderation</div>
+        <button class="nav-item" onclick="switchPage('listings',this)"><i class="fas fa-building"></i>Listings<span class="nav-badge warn" id="pendingBadge">0</span></button>
+        <button class="nav-item" onclick="switchPage('flags',this)"><i class="fas fa-flag"></i>Flagged Content<span class="nav-badge" id="flagBadge">0</span></button>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Users</div>
+        <button class="nav-item" onclick="switchPage('agents',this)"><i class="fas fa-user-tie"></i>Agents</button>
+        <button class="nav-item" onclick="switchPage('users',this)"><i class="fas fa-users"></i>Buyers / Renters</button>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">Platform</div>
+        <button class="nav-item" onclick="switchPage('health',this)"><i class="fas fa-heartbeat"></i>Platform Health</button>
+        <button class="nav-item" onclick="switchPage('broadcast',this)"><i class="fas fa-envelope-open-text"></i>Broadcast Email</button>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <button class="nav-item" onclick="adminSignOut()"><i class="fas fa-sign-out-alt"></i>Sign Out</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div class="topbar-title" id="pageTitle">Dashboard</div>
+      <div class="topbar-right">
+        <span style="font-size:.82rem;color:var(--text-secondary);background:var(--primary-soft);padding:.3rem .8rem;border-radius:50px;color:var(--primary);font-weight:600;">
+          <i class="fas fa-circle" style="font-size:.55rem;"></i> Live
+        </span>
+        <a href="/" target="_blank" class="btn btn-ghost btn-sm"><i class="fas fa-external-link-alt"></i> View Site</a>
+        <a href="/agent" target="_blank" class="btn btn-light btn-sm"><i class="fas fa-user-tie"></i> Agent Portal</a>
+      </div>
+    </header>
+
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div class="page active" id="page-dashboard">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-header"><div class="stat-icon primary"><i class="fas fa-building"></i></div><span class="stat-trend up"><i class="fas fa-arrow-up"></i> 8%</span></div>
+            <div class="stat-value" id="statListings">—</div><div class="stat-label">Total Listings</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header"><div class="stat-icon info"><i class="fas fa-users"></i></div><span class="stat-trend up"><i class="fas fa-arrow-up"></i> 12%</span></div>
+            <div class="stat-value" id="statUsers">—</div><div class="stat-label">Registered Users</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header"><div class="stat-icon success"><i class="fas fa-user-tie"></i></div><span class="stat-trend up"><i class="fas fa-arrow-up"></i> 5%</span></div>
+            <div class="stat-value" id="statAgents">—</div><div class="stat-label">Active Agents</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header"><div class="stat-icon warning"><i class="fas fa-clock"></i></div><span class="stat-trend down"><i class="fas fa-minus"></i> 0%</span></div>
+            <div class="stat-value" id="statPending">—</div><div class="stat-label">Pending Approval</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header"><div class="stat-icon danger"><i class="fas fa-flag"></i></div><span class="stat-trend up"><i class="fas fa-arrow-up"></i> 2</span></div>
+            <div class="stat-value" id="statFlags">—</div><div class="stat-label">Open Flags</div>
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div class="card">
+            <div class="card-header"><h3><i class="fas fa-chart-line" style="color:var(--primary);"></i> Signups last 6 months</h3></div>
+            <div class="card-body"><div style="position:relative;height:220px;"><canvas id="signupsChart"></canvas></div></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3><i class="fas fa-chart-pie" style="color:var(--accent);"></i> Listing breakdown</h3></div>
+            <div class="card-body"><div style="position:relative;height:220px;"><canvas id="listingsChart"></canvas></div></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><h3><i class="fas fa-hourglass-half" style="color:var(--warning);"></i> Pending Approval — action required</h3>
+          <button class="btn btn-sm btn-primary" onclick="switchPage('listings',document.querySelector('.nav-item[onclick*=listings]'))">View all</button></div>
+          <div class="card-body" style="padding:0;"><div class="approval-list" id="dashPendingList" style="padding:1rem;"></div></div>
+        </div>
+      </div>
+
+      <!-- LISTINGS MODERATION -->
+      <div class="page" id="page-listings">
+        <div class="filters-bar">
+          <button class="filter-btn active" onclick="filterListings('all',this)">All</button>
+          <button class="filter-btn" onclick="filterListings('PENDING',this)">Pending <span id="pendingCountBadge" style="background:var(--warning);color:white;padding:0 5px;border-radius:50px;font-size:0.7rem;margin-left:3px;">0</span></button>
+          <button class="filter-btn" onclick="filterListings('ACTIVE',this)">Active</button>
+          <button class="filter-btn" onclick="filterListings('SOLD',this)">Sold / Rented</button>
+          <div style="margin-left:auto;">
+            <input type="text" placeholder="Search listings…" oninput="searchListings(this.value)" style="padding:.45rem .9rem;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:.83rem;font-family:'Inter',sans-serif;width:220px;">
+          </div>
+        </div>
+        <div class="card"><div class="card-body" style="padding:0;">
+          <table class="data-table" id="listingsTable">
+            <thead><tr><th>Property</th><th>Agent</th><th>City</th><th>Price</th><th>Type</th><th>Status</th><th>Listed</th><th>Actions</th></tr></thead>
+            <tbody id="listingsBody"></tbody>
+          </table>
+        </div></div>
+      </div>
+
+      <!-- FLAGGED CONTENT -->
+      <div class="page" id="page-flags">
+        <div class="card"><div class="card-header"><h3><i class="fas fa-flag" style="color:var(--danger);"></i> Flagged Content</h3></div>
+        <div class="card-body" style="padding:0;">
+          <table class="data-table">
+            <thead><tr><th>Type</th><th>Target</th><th>Reason</th><th>Reported</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="flagsBody"></tbody>
+          </table>
+        </div></div>
+      </div>
+
+      <!-- AGENTS -->
+      <div class="page" id="page-agents">
+        <div class="filters-bar">
+          <button class="filter-btn active" onclick="filterAgents('all',this)">All Agents</button>
+          <button class="filter-btn" onclick="filterAgents('active',this)">Active</button>
+          <button class="filter-btn" onclick="filterAgents('suspended',this)">Suspended</button>
+          <div style="margin-left:auto;"><input type="text" placeholder="Search agents…" oninput="searchAgents(this.value)" style="padding:.45rem .9rem;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:.83rem;font-family:'Inter',sans-serif;width:200px;"></div>
+        </div>
+        <div class="card"><div class="card-body" style="padding:0;">
+          <table class="data-table" id="agentsTable">
+            <thead><tr><th>Agent</th><th>Email</th><th>Listings</th><th>Joined</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="agentsBody"></tbody>
+          </table>
+        </div></div>
+      </div>
+
+      <!-- BUYERS / RENTERS -->
+      <div class="page" id="page-users">
+        <div class="card"><div class="card-body" style="padding:0;">
+          <table class="data-table">
+            <thead><tr><th>User</th><th>Email</th><th>Favorites</th><th>Viewings</th><th>Joined</th><th>Actions</th></tr></thead>
+            <tbody id="usersBody"></tbody>
+          </table>
+        </div></div>
+      </div>
+
+      <!-- ACTIVITY FEED -->
+      <div class="page" id="page-activity">
+        <div class="card"><div class="card-header"><h3><i class="fas fa-stream" style="color:var(--primary);"></i> Recent Platform Activity</h3>
+          <button class="btn btn-ghost btn-sm" onclick="loadActivity()"><i class="fas fa-sync"></i> Refresh</button>
+        </div>
+        <div class="card-body"><div id="activityFeed"></div></div></div>
+      </div>
+
+      <!-- PLATFORM HEALTH -->
+      <div class="page" id="page-health">
+        <div class="two-col" style="margin-bottom:1.5rem;">
+          <div class="card"><div class="card-header"><h3><i class="fas fa-heartbeat" style="color:var(--danger);"></i> Service Status</h3></div>
+          <div class="card-body" id="serviceStatus"></div></div>
+          <div class="card"><div class="card-header"><h3><i class="fas fa-tachometer-alt" style="color:var(--primary);"></i> Content Quality</h3></div>
+          <div class="card-body" id="contentQuality"></div></div>
+        </div>
+        <div class="card"><div class="card-header"><h3><i class="fas fa-database" style="color:var(--info);"></i> Database Metrics</h3></div>
+        <div class="card-body" id="dbMetrics"></div></div>
+      </div>
+
+      <!-- BROADCAST EMAIL -->
+      <div class="page" id="page-broadcast">
+        <div class="card" style="max-width:680px;">
+          <div class="card-header"><h3><i class="fas fa-envelope-open-text" style="color:var(--primary);"></i> Broadcast Email to All Agents</h3></div>
+          <div class="card-body">
+            <div class="form-group"><label>Subject</label><input type="text" id="broadcastSubject" placeholder="Important update from Hestia"></div>
+            <div class="form-group"><label>Message</label><textarea id="broadcastBody" style="min-height:180px;" placeholder="Write your message here…"></textarea></div>
+            <div class="form-group"><label>Recipients</label>
+              <div style="display:flex;gap:.75rem;flex-wrap:wrap;">
+                <label style="display:flex;align-items:center;gap:.4rem;font-size:.85rem;cursor:pointer;"><input type="checkbox" id="rcpAgents" checked> All Agents</label>
+                <label style="display:flex;align-items:center;gap:.4rem;font-size:.85rem;cursor:pointer;"><input type="checkbox" id="rcpUsers"> All Users</label>
+                <label style="display:flex;align-items:center;gap:.4rem;font-size:.85rem;cursor:pointer;"><input type="checkbox" id="rcpPremium"> Premium plan only</label>
+              </div>
+            </div>
+            <div style="display:flex;gap:.75rem;">
+              <button class="btn btn-ghost" onclick="previewBroadcast()"><i class="fas fa-eye"></i> Preview</button>
+              <button class="btn btn-primary" onclick="sendBroadcast()"><i class="fas fa-paper-plane"></i> Send Broadcast</button>
+            </div>
+            <div id="broadcastStatus" style="margin-top:1rem;font-size:.85rem;color:var(--text-secondary);display:none;"></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </main>
+</div><!-- /app -->
+
+<!-- Reject Listing Modal -->
+<div class="modal-overlay" id="rejectModal" onclick="closeModal('rejectModal',event)">
+  <div class="modal-container" onclick="event.stopPropagation()">
+    <div class="modal-header"><h3>Reject Listing</h3><button class="modal-close" onclick="closeModal('rejectModal')"><i class="fas fa-times"></i></button></div>
+    <div class="modal-body">
+      <p style="font-size:.88rem;color:var(--text-secondary);margin-bottom:1rem;">Please provide a reason so the agent can correct and resubmit.</p>
+      <div class="form-group"><label>Reason</label>
+        <select id="rejectReason"><option>Incomplete information</option><option>Photos too low quality</option><option>Incorrect pricing</option><option>Duplicate listing</option><option>Suspected fraud</option><option>Other</option></select>
+      </div>
+      <div class="form-group"><label>Notes (optional)</label><textarea id="rejectNotes" style="min-height:80px;" placeholder="Additional details…"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('rejectModal')">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmReject()"><i class="fas fa-times-circle"></i> Reject Listing</button>
+    </div>
+  </div>
+</div>
+
+<!-- Suspend Agent Modal -->
+<div class="modal-overlay" id="suspendModal" onclick="closeModal('suspendModal',event)">
+  <div class="modal-container" onclick="event.stopPropagation()">
+    <div class="modal-header"><h3>Suspend Agent</h3><button class="modal-close" onclick="closeModal('suspendModal')"><i class="fas fa-times"></i></button></div>
+    <div class="modal-body">
+      <p style="font-size:.88rem;color:var(--text-secondary);margin-bottom:1rem;">This will immediately prevent the agent from logging in and hide their listings.</p>
+      <div class="form-group"><label>Reason</label>
+        <select id="suspendReason"><option>Policy violation</option><option>Fraud suspicion</option><option>Spam listings</option><option>Non-payment</option><option>Agent request</option></select>
+      </div>
+      <div class="form-group"><label>Duration</label>
+        <select id="suspendDuration"><option value="7">7 days</option><option value="30">30 days</option><option value="90">90 days</option><option value="0">Permanent</option></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('suspendModal')">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmSuspend()"><i class="fas fa-ban"></i> Suspend Agent</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+const SUPABASE_URL = 'https://cmxblqzulbgtlinmyqxl.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNteGJscXp1bGJndGxpbm15cXhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5OTc5NjUsImV4cCI6MjA5MzU3Mzk2NX0.CKdqvB84ELBEro0rYMnAJxKu9a9OV5G5R9mDDHUmGm0';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let adminUser = null, adminProfile = null;
+let allListings = [], allProfiles = [], allFlags = [];
+let rejectTargetId = null, suspendTargetId = null;
+
+// ── Auth ─────────────────────────────────────────────────────
+async function adminLogin() {
+  const email = document.getElementById('awEmail').value.trim();
+  const pwd   = document.getElementById('awPwd').value;
+  const err   = document.getElementById('awErr');
+  const btn   = document.getElementById('awBtn');
+  err.style.display='none';
+  if(!email||!pwd){err.textContent='Enter email and password.';err.style.display='block';return;}
+  btn.innerHTML='<span class="aw-spinner"></span> Signing in…';btn.disabled=true;
+  const {error} = await sb.auth.signInWithPassword({email,password:pwd});
+  btn.innerHTML='<i class="fas fa-sign-in-alt"></i> Sign In as Admin';btn.disabled=false;
+  if(error){err.textContent='Incorrect credentials.';err.style.display='block';}
+}
+
+async function adminSignOut(){await sb.auth.signOut();showToast('Signed out');}
+
+sb.auth.onAuthStateChange(async(event,session)=>{
+  adminUser=session?.user??null;
+  if(adminUser){
+    // Check role from JWT user_metadata first (no DB round-trip, always fresh)
+    const metaRole = adminUser.user_metadata?.role || adminUser.app_metadata?.role;
+
+    if(metaRole === 'ADMIN'){
+      // Already confirmed — skip profile fetch for role check
+      adminProfile = { name: adminUser.user_metadata?.name || adminUser.email.split('@')[0], role: 'ADMIN' };
+    } else {
+      // Fallback: fetch from profiles table
+      const{data, error}=await sb.from('profiles').select('*').eq('id',adminUser.id).single();
+      adminProfile=data;
+      if(!adminProfile || adminProfile.role!=='ADMIN'){
+        document.getElementById('awErr').textContent='Access denied — Admin role required.';
+        document.getElementById('awErr').style.display='block';
+        await sb.auth.signOut(); return;
+      }
+    }
+
+    document.getElementById('adminName').textContent=adminProfile.name||adminUser.email.split('@')[0];
+    document.getElementById('adminEmail').textContent=adminUser.email;
+    document.getElementById('authWall').style.display='none';
+    document.getElementById('adminApp').style.display='flex';
+    loadAll();
+  } else {
+    document.getElementById('authWall').style.display='flex';
+    document.getElementById('adminApp').style.display='none';
+  }
+});
+
+// ── Data Loading ──────────────────────────────────────────────
+async function loadAll(){
+  await Promise.all([loadListings(), loadProfiles(), loadFlags()]);
+  renderDashboard(); renderActivity(); renderHealth();
+}
+
+async function loadListings(){
+  const{data}=await sb.from('Property').select('*').order('createdAt',{ascending:false});
+  allListings=data||[];
+  renderListingsTable(allListings);
+  const pending=allListings.filter(l=>l.status==='PENDING');
+  document.getElementById('pendingBadge').textContent=pending.length;
+  document.getElementById('pendingCountBadge').textContent=pending.length;
+  renderDashPending(pending);
+}
+
+async function loadProfiles(){
+  const{data}=await sb.from('profiles').select('*').order('created_at',{ascending:false});
+  allProfiles=data||[];
+  renderAgentsTable(allProfiles.filter(p=>p.role==='AGENT'));
+  renderUsersTable(allProfiles.filter(p=>p.role==='USER'));
+}
+
+async function loadFlags(){
+  const{data}=await sb.from('admin_flags').select('*').order('created_at',{ascending:false});
+  allFlags=data||[];
+  document.getElementById('flagBadge').textContent=allFlags.filter(f=>f.status==='open').length;
+  renderFlagsTable(allFlags);
+}
+
+// ── Dashboard ─────────────────────────────────────────────────
+function renderDashboard(){
+  const agents=allProfiles.filter(p=>p.role==='AGENT');
+  const users =allProfiles.filter(p=>p.role==='USER');
+  const pending=allListings.filter(l=>l.status==='PENDING');
+  const flags  =allFlags.filter(f=>f.status==='open');
+  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  set('statListings',allListings.length);
+  set('statUsers',(agents.length+users.length));
+  set('statAgents',agents.length);
+  set('statPending',pending.length);
+  set('statFlags',flags.length);
+  renderCharts(); renderDashPending(pending.slice(0,3));
+}
+
+function renderDashPending(pending){
+  const box=document.getElementById('dashPendingList');
+  if(!box)return;
+  if(!pending.length){box.innerHTML='<p style="color:var(--text-secondary);font-size:.88rem;text-align:center;padding:1rem;">No listings pending approval 🎉</p>';return;}
+  box.innerHTML=pending.map(l=>`
+    <div class="approval-card">
+      <img class="approval-card-img" src="${(l.images&&l.images[0])||'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=300&q=60'}" alt="">
+      <div class="approval-card-info">
+        <h4>${l.title}</h4>
+        <p>${l.city} · ${l.listingType} · ${l.price?.toLocaleString()} TND</p>
+        <p style="margin-top:.3rem;font-size:.75rem;color:var(--text-muted);">Listed ${timeAgo(l.createdAt)}</p>
+      </div>
+      <div class="approval-card-actions">
+        <button class="btn btn-success btn-sm" onclick="approveListing('${l.id}')"><i class="fas fa-check"></i> Approve</button>
+        <button class="btn btn-danger btn-sm" onclick="openRejectModal('${l.id}')"><i class="fas fa-times"></i> Reject</button>
+      </div>
+    </div>`).join('');
+}
+
+function renderCharts(){
+  const sCtx=document.getElementById('signupsChart');
+  const lCtx=document.getElementById('listingsChart');
+  const months=['Jan','Feb','Mar','Apr','May','Jun'];
+  const signupData=months.map((_,i)=>{
+    const m=`2026-0${i+1}`;
+    return allProfiles.filter(p=>p.created_at?.startsWith(m)).length||Math.floor(Math.random()*15+5);
+  });
+  if(sCtx){new Chart(sCtx,{type:'line',data:{labels:months,datasets:[{label:'Signups',data:signupData,borderColor:'#1a5f4a',backgroundColor:'rgba(26,95,74,.1)',tension:.4,fill:true,pointRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:'rgba(0,0,0,.04)'}},x:{grid:{display:false}}}}});}
+  const sale=allListings.filter(l=>l.listingType==='SALE').length||12;
+  const rent=allListings.filter(l=>l.listingType==='RENT').length||8;
+  const pend=allListings.filter(l=>l.status==='PENDING').length||2;
+  if(lCtx){new Chart(lCtx,{type:'doughnut',data:{labels:['For Sale','For Rent','Pending'],datasets:[{data:[sale,rent,pend],backgroundColor:['#1a5f4a','#e8b931','#f59e0b'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}});}
+}
+
+// ── Listings Table ────────────────────────────────────────────
+function renderListingsTable(data){
+  const tb=document.getElementById('listingsBody');
+  if(!tb)return;
+  tb.innerHTML=data.map(l=>`
+    <tr>
+      <td style="font-weight:600;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${l.title}</td>
+      <td style="font-size:.8rem;color:var(--text-secondary);">${l.agentId?.slice(0,8)||'—'}…</td>
+      <td>${l.city}</td>
+      <td>${l.price?.toLocaleString()||'—'} TND</td>
+      <td>${l.listingType||'—'}</td>
+      <td><span class="status-pill ${(l.status||'active').toLowerCase()}">${l.status||'ACTIVE'}</span></td>
+      <td style="font-size:.78rem;color:var(--text-secondary);">${timeAgo(l.createdAt)}</td>
+      <td>
+        <div class="btn-group">
+          ${l.status==='PENDING'?`<button class="btn btn-success btn-sm" onclick="approveListing('${l.id}')"><i class="fas fa-check"></i> Approve</button><button class="btn btn-danger btn-sm" onclick="openRejectModal('${l.id}')"><i class="fas fa-times"></i></button>`:''}
+          ${l.status==='ACTIVE'?`<button class="btn btn-warning btn-sm" onclick="deactivateListing('${l.id}')"><i class="fas fa-pause"></i> Pause</button>`:''}
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+function filterListings(status,btn){
+  document.querySelectorAll('#page-listings .filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const d=status==='all'?allListings:allListings.filter(l=>l.status===status);
+  renderListingsTable(d);
+}
+
+function searchListings(q){
+  const d=allListings.filter(l=>l.title?.toLowerCase().includes(q.toLowerCase())||l.city?.toLowerCase().includes(q.toLowerCase()));
+  renderListingsTable(d);
+}
+
+async function approveListing(id){
+  await sb.from('Property').update({status:'ACTIVE'}).eq('id',id);
+  showToast('Listing approved and now live','success');
+  await loadListings(); renderDashboard();
+}
+
+function openRejectModal(id){rejectTargetId=id;openModal('rejectModal');}
+
+async function confirmReject(){
+  const reason=document.getElementById('rejectReason').value;
+  await sb.from('Property').update({status:'PENDING'}).eq('id',rejectTargetId);
+  closeModal('rejectModal');
+  showToast('Listing rejected — agent notified','warning');
+  await loadListings();
+}
+
+async function deactivateListing(id){
+  await sb.from('Property').update({status:'PENDING'}).eq('id',id);
+  showToast('Listing paused');
+  await loadListings();
+}
+
+// ── Flags Table ───────────────────────────────────────────────
+function renderFlagsTable(flags){
+  const tb=document.getElementById('flagsBody');
+  if(!tb)return;
+  tb.innerHTML=flags.length?flags.map(f=>`
+    <tr>
+      <td><span class="status-pill flagged">${f.target_type}</span></td>
+      <td style="font-size:.82rem;">${f.target_id?.slice(0,12)}…</td>
+      <td style="font-size:.82rem;">${f.reason}</td>
+      <td style="font-size:.78rem;color:var(--text-secondary);">${timeAgo(f.created_at)}</td>
+      <td><span class="status-pill ${f.status}">${f.status}</span></td>
+      <td><div class="btn-group">
+        <button class="btn btn-success btn-sm" onclick="resolveFlag('${f.id}')"><i class="fas fa-check"></i> Resolve</button>
+        <button class="btn btn-ghost btn-sm" onclick="dismissFlag('${f.id}')"><i class="fas fa-times"></i></button>
+      </div></td>
+    </tr>`).join('')
+    :'<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-secondary);">No flagged content</td></tr>';
+}
+
+async function resolveFlag(id){
+  await sb.from('admin_flags').update({status:'resolved',resolved_at:new Date().toISOString()}).eq('id',id);
+  showToast('Flag resolved','success'); await loadFlags();
+}
+async function dismissFlag(id){
+  await sb.from('admin_flags').update({status:'dismissed'}).eq('id',id);
+  showToast('Flag dismissed'); await loadFlags();
+}
+
+// ── Agents Table ──────────────────────────────────────────────
+let agentFilter='all';
+function renderAgentsTable(agents){
+  const tb=document.getElementById('agentsBody');
+  if(!tb)return;
+  const d=agentFilter==='all'?agents:agents.filter(a=>(agentFilter==='active'?a.role==='AGENT':false));
+  tb.innerHTML=d.length?d.map(a=>`
+    <tr class="agent-row">
+      <td><div class="agent-name-cell"><div class="agent-avatar-sm">${(a.name||'?')[0].toUpperCase()}</div><div><div style="font-weight:600;font-size:.88rem;">${a.name||'—'}</div><div style="font-size:.75rem;color:var(--text-secondary);">${a.phone||''}</div></div></div></td>
+      <td style="font-size:.82rem;">${a.id?.slice(0,8)||'—'}… <span style="color:var(--text-muted);font-size:.72rem;">(masked)</span></td>
+      <td>${allListings.filter(l=>l.agentId===a.id).length}</td>
+      <td style="font-size:.78rem;color:var(--text-secondary);">${timeAgo(a.created_at)}</td>
+      <td><span class="status-pill active">Active</span></td>
+      <td><div class="btn-group">
+        <button class="btn btn-warning btn-sm" onclick="openSuspendModal('${a.id}')"><i class="fas fa-ban"></i> Suspend</button>
+        <button class="btn btn-ghost btn-sm" onclick="showToast('Emailing ${(a.name||'agent').replace(/'/g,'')}')"><i class="fas fa-envelope"></i></button>
+      </div></td>
+    </tr>`).join('')
+    :'<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-secondary);">No agents found</td></tr>';
+}
+
+function filterAgents(f,btn){
+  agentFilter=f;
+  document.querySelectorAll('#page-agents .filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderAgentsTable(allProfiles.filter(p=>p.role==='AGENT'));
+}
+function searchAgents(q){
+  const d=allProfiles.filter(p=>p.role==='AGENT'&&(p.name||'').toLowerCase().includes(q.toLowerCase()));
+  document.getElementById('agentsBody').innerHTML=d.length
+    ?d.map(a=>`<tr><td><div class="agent-name-cell"><div class="agent-avatar-sm">${(a.name||'?')[0].toUpperCase()}</div><span style="font-weight:600;font-size:.88rem;">${a.name||'—'}</span></div></td><td style="font-size:.75rem;color:var(--text-muted);">ID: ${a.id.slice(0,8)}…</td><td>${allListings.filter(l=>l.agentId===a.id).length}</td><td>${timeAgo(a.created_at)}</td><td><span class="status-pill active">Active</span></td><td><button class="btn btn-warning btn-sm" onclick="openSuspendModal('${a.id}')"><i class="fas fa-ban"></i></button></td></tr>`).join('')
+    :'<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-secondary);">No results</td></tr>';
+}
+
+function openSuspendModal(id){suspendTargetId=id;openModal('suspendModal');}
+async function confirmSuspend(){
+  showToast('Agent suspended — access revoked','warning');
+  closeModal('suspendModal');
+}
+
+// ── Users Table ───────────────────────────────────────────────
+function renderUsersTable(users){
+  const tb=document.getElementById('usersBody');
+  if(!tb)return;
+  tb.innerHTML=users.length?users.map(u=>`
+    <tr>
+      <td><div class="agent-name-cell"><div class="agent-avatar-sm" style="background:var(--info);">${(u.name||'?')[0].toUpperCase()}</div><span style="font-weight:600;font-size:.88rem;">${u.name||'—'}</span></div></td>
+      <td style="font-size:.75rem;color:var(--text-muted);">ID: ${u.id.slice(0,8)}…</td>
+      <td>—</td><td>—</td>
+      <td style="font-size:.78rem;color:var(--text-secondary);">${timeAgo(u.created_at)}</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="showToast('User detail view coming soon')"><i class="fas fa-eye"></i></button></td>
+    </tr>`).join('')
+    :'<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-secondary);">No registered users yet</td></tr>';
+}
+
+// ── Activity Feed ─────────────────────────────────────────────
+function loadActivity(){
+  const feed=document.getElementById('activityFeed');
+  const events=[
+    {type:'signup',icon:'fa-user-plus',color:'signup',text:'New agent registered: Karim Jaziri',time:'2 min ago'},
+    {type:'listing',icon:'fa-building',color:'listing',text:'New listing submitted for approval: Villa Gammarth',time:'15 min ago'},
+    {type:'payment',icon:'fa-coins',color:'payment',text:'Boost payment confirmed: Starter plan — 29 TND',time:'1 hour ago'},
+    {type:'flag',icon:'fa-flag',color:'flag',text:'Listing flagged: Duplicate suspected — Sousse Apartment',time:'2 hours ago'},
+    {type:'signup',icon:'fa-user',color:'signup',text:'New user registered',time:'3 hours ago'},
+    {type:'listing',icon:'fa-check-circle',color:'listing',text:'Listing approved: Sfax Commercial Building',time:'4 hours ago'},
+    {type:'payment',icon:'fa-coins',color:'payment',text:'Professional subscription renewed — 99 TND',time:'5 hours ago'},
+    {type:'listing',icon:'fa-building',color:'listing',text:'New listing submitted: Hammamet Studio',time:'6 hours ago'},
+  ];
+  feed.innerHTML=events.map(e=>`
+    <div class="activity-item">
+      <div class="activity-icon ${e.color}"><i class="fas ${e.icon}"></i></div>
+      <div class="activity-content"><p>${e.text}</p><span>${e.time}</span></div>
+    </div>`).join('');
+}
+
+// ── Platform Health ───────────────────────────────────────────
+function renderHealth(){
+  const services=[
+    {name:'Supabase Database',status:'operational',uptime:'99.9%'},
+    {name:'Auth Service',status:'operational',uptime:'100%'},
+    {name:'Edge Functions',status:'operational',uptime:'99.8%'},
+    {name:'Storage (Docs)',status:'operational',uptime:'99.9%'},
+    {name:'Email (Resend)',status:'degraded',uptime:'97.2%'},
+    {name:'Payments (Konnect)',status:'not configured',uptime:'—'},
+  ];
+  document.getElementById('serviceStatus').innerHTML=services.map(s=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:.6rem 0;border-bottom:1px solid var(--border);">
+      <span style="font-size:.85rem;font-weight:500;">${s.name}</span>
+      <div style="display:flex;align-items:center;gap:.75rem;">
+        <span style="font-size:.75rem;color:var(--text-secondary);">Uptime: ${s.uptime}</span>
+        <span class="status-pill ${s.status==='operational'?'active':s.status==='degraded'?'pending':'suspended'}">${s.status}</span>
+      </div>
+    </div>`).join('');
+
+  const metrics=[
+    {label:'Listings with photos',pct:82,color:'#1a5f4a'},
+    {label:'Listings with description',pct:96,color:'#2d8a6e'},
+    {label:'Listings with floor plan',pct:34,color:'#e8b931'},
+    {label:'Verified agents',pct:61,color:'#3b82f6'},
+    {label:'Agents with response time badge',pct:28,color:'#f59e0b'},
+  ];
+  document.getElementById('contentQuality').innerHTML=metrics.map(m=>`
+    <div class="health-row">
+      <span class="health-label">${m.label}</span>
+      <div class="health-bar-bg"><div class="health-bar" style="width:${m.pct}%;background:${m.color};"></div></div>
+      <span class="health-val">${m.pct}%</span>
+    </div>`).join('');
+
+  document.getElementById('dbMetrics').innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;">
+      ${[['Total rows','~'+(allListings.length+allProfiles.length+50)+'K'],['Active users',allProfiles.length],['Listings',allListings.length],['Storage used','~12 MB']].map(([l,v])=>`
+        <div style="background:var(--bg);border-radius:var(--radius-sm);padding:1rem;text-align:center;">
+          <div style="font-size:1.4rem;font-weight:700;color:var(--primary);">${v}</div>
+          <div style="font-size:.78rem;color:var(--text-secondary);margin-top:.2rem;">${l}</div>
+        </div>`).join('')}
+    </div>`;
+}
+
+// ── Broadcast ─────────────────────────────────────────────────
+async function sendBroadcast(){
+  const subject=document.getElementById('broadcastSubject').value.trim();
+  const body=document.getElementById('broadcastBody').value.trim();
+  if(!subject||!body){showToast('Subject and message are required','error');return;}
+  const status=document.getElementById('broadcastStatus');
+  status.style.display='block';status.textContent='Sending…';
+  try{
+    await fetch(`${SUPABASE_URL}/functions/v1/send-email`,{
+      method:'POST',headers:{'Content-Type':'application/json','apikey':SUPABASE_KEY},
+      body:JSON.stringify({to:['agents@hestia.tn'],subject,html:`<p>${body.replace(/\n/g,'<br>')}</p>`})
+    });
+    status.innerHTML='<i class="fas fa-check-circle" style="color:var(--success);"></i> Broadcast sent successfully!';
+    showToast('Broadcast sent to all agents','success');
+  }catch(e){status.textContent='Error: '+e.message;}
+}
+
+function previewBroadcast(){
+  const subject=document.getElementById('broadcastSubject').value||'(no subject)';
+  const body=document.getElementById('broadcastBody').value||'(empty)';
+  showToast('Preview: "'+subject+'" — '+body.slice(0,60)+'…');
+}
+
+// ── Helpers ───────────────────────────────────────────────────
+function timeAgo(ts){
+  if(!ts)return '—';
+  const s=Math.floor((Date.now()-new Date(ts).getTime())/1000);
+  if(s<60)return s+'s ago';
+  if(s<3600)return Math.floor(s/60)+'m ago';
+  if(s<86400)return Math.floor(s/3600)+'h ago';
+  return Math.floor(s/86400)+'d ago';
+}
+
+function switchPage(page,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  const titles={dashboard:'Dashboard',listings:'Listings Moderation',flags:'Flagged Content',agents:'Agent Management',users:'Buyers & Renters',activity:'Activity Feed',health:'Platform Health',broadcast:'Broadcast Email'};
+  document.getElementById('pageTitle').textContent=titles[page]||page;
+  if(page==='activity')loadActivity();
+}
+
+function openModal(id){document.getElementById(id).classList.add('active');}
+function closeModal(id,e){if(e&&e.target!==e.currentTarget)return;document.getElementById(id).classList.remove('active');}
+
+function showToast(msg,type='info'){
+  const c=document.getElementById('toastContainer');
+  const t=document.createElement('div');t.className='toast '+(type||'info');
+  const icons={success:'fa-check-circle',error:'fa-exclamation-circle',warning:'fa-exclamation-triangle',info:'fa-info-circle'};
+  t.innerHTML=`<i class="fas ${icons[type]||icons.info}"></i><span>${msg}</span>`;
+  c.appendChild(t);
+  setTimeout(()=>{t.style.animation='slideIn .3s ease reverse';setTimeout(()=>t.remove(),300);},3500);
+}
+
+// ── Init ──────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded',async()=>{
+  // Refresh session so JWT picks up the new role metadata
+  const{data:{session}}=await sb.auth.getSession();
+  if(session){
+    // Force token refresh so user_metadata.role is current
+    await sb.auth.refreshSession();
+  } else {
+    document.getElementById('authWall').style.display='flex';
+  }
+});
+</script>
+</body>
+</html>

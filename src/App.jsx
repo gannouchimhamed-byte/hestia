@@ -13,6 +13,8 @@ export default function App() {
           <Routes>
             <Route path="/" element={<><Navbar /><Home /></>} />
             <Route path="/property/:id" element={<PropertyDetail />} />
+            {/* /agent and /admin are served as static HTML files from /public */}
+            {/* Vercel routes them directly — no React route needed */}
           </Routes>
         </ToastProvider>
       </AuthProvider>
