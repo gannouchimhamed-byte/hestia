@@ -16,6 +16,11 @@ i18n
       caches: ['localStorage'],
     },
     interpolation: { escapeValue: false },
+    // Critical: makes t() safe to call synchronously before init completes
+    initImmediate: false,
+    react: {
+      useSuspense: false,
+    },
   })
 
 export default i18n
