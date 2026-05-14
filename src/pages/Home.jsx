@@ -101,7 +101,7 @@ function ScrollStrip({ items, renderCard, title, subtitle, linkTo, linkLabel }) 
         style={{scrollbarWidth:'none', msOverflowStyle:'none'}}>
         <style>{`div::-webkit-scrollbar{display:none}`}</style>
         {items.map((item, i) => (
-          <div key={i} className="flex-shrink-0 w-72">
+          <div key={i} className="flex-shrink-0 w-80">
             {renderCard(item, i)}
           </div>
         ))}
@@ -337,11 +337,10 @@ export default function Home() {
               <h2 className="font-display text-2xl font-bold text-gray-900">{t('home.citiesTitle')}</h2>
             </div>
           </div>
-          {/* 2 large + 2 medium layout */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {CITIES.map((c, i) => (
+            {CITIES.map((c) => (
               <Link key={c.name} to={`/search?location=${c.name}`}
-                className={`relative overflow-hidden rounded-2xl cursor-pointer group ${i < 2 ? 'aspect-[3/4]' : 'aspect-square'}`}>
+                className="relative overflow-hidden rounded-2xl cursor-pointer group" style={{aspectRatio:'4/3'}}>
                 <img src={c.img} alt={c.name}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
