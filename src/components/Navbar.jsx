@@ -33,10 +33,6 @@ export default function Navbar() {
   const displayName = profile?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'Account'
   const textColor = scrolled ? 'text-gray-600' : 'text-white/90'
 
-  function toggleLang() {
-    i18n.changeLanguage(i18n.language === 'fr' ? 'en' : 'fr')
-  }
-
   return (
     <>
       <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 h-16 flex items-center
@@ -62,15 +58,30 @@ export default function Navbar() {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Language toggle */}
-            <button onClick={toggleLang}
-              className={`flex items-center gap-1.5 text-sm font-bold px-3 py-1.5 rounded-lg transition-all border
-                ${scrolled
-                  ? 'border-gray-200 text-gray-600 hover:border-primary hover:text-primary'
-                  : 'border-white/30 text-white hover:bg-white/10'}`}>
-              <i className="fas fa-globe text-xs" />
-              {i18n.language === 'fr' ? 'FR' : 'EN'}
-            </button>
+            {/* Language switcher */}
+            <div className="relative group">
+              <button
+                className={`flex items-center gap-1.5 text-sm font-bold px-3 py-1.5 rounded-lg transition-all border
+                  ${scrolled
+                    ? 'border-gray-200 text-gray-600 hover:border-primary hover:text-primary'
+                    : 'border-white/30 text-white hover:bg-white/10'}`}>
+                <i className="fas fa-globe text-xs" />
+                {i18n.language === 'ar' ? 'ع' : i18n.language === 'fr' ? 'FR' : 'EN'}
+                <i className="fas fa-chevron-down text-xs opacity-60" />
+              </button>
+              <div className="absolute right-0 top-full mt-1 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-50 min-w-[100px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-150">
+                {[['en','English','EN'],['fr','Français','FR'],['ar','العربية','ع']].map(([code, label, short]) => (
+                  <button key={code}
+                    onClick={() => i18n.changeLanguage(code)}
+                    className={`w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-50 transition-colors
+                      ${i18n.language === code ? 'text-primary font-bold' : 'text-gray-700 font-medium'}`}>
+                    <span className="w-6 text-center font-bold text-xs">{short}</span>
+                    <span>{label}</span>
+                    {i18n.language === code && <i className="fas fa-check text-primary text-xs ml-auto" />}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             {user ? (
               <div className="relative" ref={ddRef}>

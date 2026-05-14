@@ -9,8 +9,8 @@ export default {
         brand:   { bg: '#f8fafc' },
       },
       fontFamily: {
-        sans:    ['Inter', 'sans-serif'],
-        display: ['"Playfair Display"', 'serif'],
+        sans:    ['Cairo', 'Inter', 'sans-serif'],
+        display: ['Cairo', '"Playfair Display"', 'serif'],
       },
       boxShadow: {
         card: '0 2px 12px rgba(0,0,0,0.08)',

@@ -61,6 +61,26 @@
 .animate-fade-up { animation: fadeUp 0.4s ease forwards; }
 .card-highlight { animation: pulse-ring 0.8s ease; }
 
+/* RTL support */
+[dir="rtl"] .fa-arrow-right::before { content: "\f060"; } /* flip arrow */
+[dir="rtl"] .fa-arrow-left::before  { content: "\f061"; }
+[dir="rtl"] .fa-chevron-right::before { content: "\f053"; }
+[dir="rtl"] .fa-chevron-left::before  { content: "\f054"; }
+[dir="rtl"] .hide-scrollbar { direction: rtl; }
+
+/* Arabic font override */
+[dir="rtl"] body,
+[dir="rtl"] input,
+[dir="rtl"] select,
+[dir="rtl"] textarea,
+[dir="rtl"] button {
+  font-family: 'Cairo', sans-serif;
+  letter-spacing: 0;
+}
+[dir="rtl"] .font-display {
+  font-family: 'Cairo', serif;
+}
+
 /* Scrollbar hidden for map list */
 .hide-scrollbar::-webkit-scrollbar { display: none; }
 .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
