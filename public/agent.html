@@ -563,7 +563,7 @@
     </div>
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <a href="#" class="sidebar-brand"><i class="fas fa-home"></i>Hestia Agent</a>
+                <a href="/" class="sidebar-brand"><i class="fas fa-home"></i>Hestia Agent</a>
                 <div class="sidebar-agent" onclick="switchPage('settings')">
                     <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80" alt="Agent" id="sidebarAgentImg">
                     <div class="sidebar-agent-info">
@@ -598,6 +598,7 @@
                 </div>
             </nav>
             <div class="sidebar-footer">
+                <a href="/" class="nav-item" style="display:flex;align-items:center;gap:0.6rem;text-decoration:none;"><i class="fas fa-home"></i>View Site</a>
                 <button class="nav-item" onclick="agentSignOut()"><i class="fas fa-sign-out-alt"></i>Log Out</button>
             </div>
         </aside>
@@ -1763,16 +1764,24 @@
             { name: "Closing", text: "Congratulations {name}! Your offer on {property} has been accepted. Let's schedule the signing. Available times: [TIMES]." }
         ];
 
-        let calendarEvents = [
-            { day: 7, type: "viewing", text: "Villa viewing - Amir K" },
-            { day: 7, type: "call", text: "Call Fatima BS" },
-            { day: 8, type: "viewing", text: "Penthouse - Youssef M" },
-            { day: 8, type: "meeting", text: "Team meeting" },
-            { day: 9, type: "call", text: "Follow up Karim J" },
-            { day: 10, type: "viewing", text: "Studio viewing - Rania" },
-            { day: 12, type: "meeting", text: "Client lunch - Samira" },
-            { day: 15, type: "call", text: "Negotiation call - Karim" }
-        ];
+        let calendarEvents = []
+
+        async function loadCalendarFromDB() {
+            if (!sb || !currentUser) return;
+            const { data } = await sb.from('viewings')
+                .select('*')
+                .eq('user_id', currentUser.id)
+                .order('viewing_date', { ascending: true });
+            if (data && data.length) {
+                calendarEvents = data.map(v => ({
+                    day: new Date(v.viewing_date).getDate(),
+                    type: 'viewing',
+                    text: v.property_title + (v.viewing_time ? ' — ' + v.viewing_time : ''),
+                    status: v.status
+                }));
+                renderCalendar();
+            }
+        }
 
         let documents = [
             { name: "Lease Agreement - Nadia Ferchichi.pdf", size: "245 KB", date: "May 3, 2026", type: "pdf" },
@@ -3261,7 +3270,7 @@
                     const { data: prof } = await client.from('profiles').select('*').eq('id', agentUser.id).single();
                     agentProfile = prof;
                     updateSidebarAgent(agentUser, agentProfile);
-                    if (!window._dashInited) { window._dashInited = true; init(); }
+                    if (!window._dashInited) { window._dashInited = true; init(); loadCalendarFromDB(); }
                 }
             } catch(e) {
                 btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In'; btn.disabled = false;
@@ -3333,7 +3342,7 @@
                 agentProfile = data;
                 updateSidebarAgent(agentUser, agentProfile);
                 showAuthWall(false);
-                if (!window._dashInited) { window._dashInited = true; init(); }
+                if (!window._dashInited) { window._dashInited = true; init(); loadCalendarFromDB(); }
             } else {
                 showAuthWall(true);
                 window._dashInited = false;
