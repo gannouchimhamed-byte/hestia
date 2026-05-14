@@ -16,13 +16,9 @@ export default function PropertyCard({ p, view = 'grid', onHover, highlighted })
       ? t('property.dayAgo', { count: 1 })
       : t('property.daysAgo', { count: days })
 
-  // Freshness badge defined inside component so t() is available
-  const FRESHNESS_BADGE = {
-    new:     { label: t('property.new'),           cls: 'bg-blue-500 text-white' },
-    reduced: { label: t('property.priceReduced'),  cls: 'bg-emerald-500 text-white' },
-    hot:     { label: t('property.popular'),       cls: 'bg-red-500 text-white' },
-    stale:   { label: t('property.daysOnMarket'),  cls: 'bg-gray-400 text-white' },
-  }
+  // Only show badge when it genuinely helps the buyer
+  const showNewBadge     = tier === 'new'
+  const showReducedBadge = tier === 'reduced'
 
   const isGrid = view === 'grid'
 
@@ -43,20 +39,32 @@ export default function PropertyCard({ p, view = 'grid', onHover, highlighted })
           src={p.images[0]} alt={p.title}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
-        {/* Type badge */}
+        {/* Type + Featured badges — top left */}
         <div className="absolute top-3 left-3 flex gap-1.5">
-          <span className={`px-2.5 py-1 rounded-md text-xs font-bold tracking-wide ${p.type === 'sale' ? 'bg-primary text-white' : 'bg-accent text-gray-900'}`}>
+          <span className={`px-2 py-0.5 rounded text-xs font-bold tracking-wide ${p.type === 'sale' ? 'bg-primary text-white' : 'bg-accent text-gray-900'}`}>
             {p.type === 'sale' ? t('property.forSale') : t('property.forRent')}
           </span>
           {p.featured && (
-            <span className="px-2.5 py-1 rounded-md text-xs font-bold bg-amber-500 text-white">{t('property.featured')}</span>
+            <span className="px-2 py-0.5 rounded text-xs font-bold bg-amber-500 text-white">
+              {t('property.featured')}
+            </span>
           )}
         </div>
-        {/* Freshness badge */}
-        {tier !== 'fresh' && FRESHNESS_BADGE[tier] && (
-          <span className={`absolute bottom-3 left-3 px-2.5 py-1 rounded-md text-xs font-bold ${FRESHNESS_BADGE[tier].cls}`}>
-            {FRESHNESS_BADGE[tier].label}
-          </span>
+
+        {/* New / Price Reduced — bottom left, only when useful */}
+        {(showNewBadge || showReducedBadge) && (
+          <div className="absolute bottom-3 left-3">
+            {showReducedBadge && (
+              <span className="px-2 py-0.5 rounded text-xs font-bold bg-emerald-500 text-white">
+                {t('property.priceReduced')}
+              </span>
+            )}
+            {showNewBadge && !showReducedBadge && (
+              <span className="px-2 py-0.5 rounded text-xs font-bold bg-blue-500 text-white">
+                {t('property.new')}
+              </span>
+            )}
+          </div>
         )}
         {/* Actions */}
         <div className="absolute top-3 right-3 flex flex-col gap-1.5">
