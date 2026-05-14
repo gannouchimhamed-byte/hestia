@@ -141,7 +141,7 @@ export default function PropertyDetail() {
         <span className="text-gray-700 font-medium truncate">{p.title}</span>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 pb-16">
+      <div className="max-w-7xl mx-auto px-4 pb-16 lg:pb-16 pb-32">
         <div className="grid lg:grid-cols-[1fr_380px] gap-6 items-start">
 
           {/* LEFT */}
@@ -162,7 +162,7 @@ export default function PropertyDetail() {
                 </div>
 
                 {tab === 'photos' && (
-                  <div className="relative h-[440px] bg-gray-100">
+                  <div className="relative h-64 sm:h-[440px] bg-gray-100">
                     <img src={p.images[photoIdx]} alt={p.title} className="w-full h-full object-cover" />
                     {p.images.length > 1 && (
                       <>
@@ -451,8 +451,8 @@ export default function PropertyDetail() {
             )}
           </div>
 
-          {/* SIDEBAR */}
-          <div className="sticky top-14 space-y-4">
+          {/* SIDEBAR — desktop only */}
+          <div className="hidden lg:block sticky top-14 space-y-4">
             <div className="bg-white rounded-2xl border border-gray-100 shadow-xl overflow-hidden">
               <div className="bg-primary px-5 py-4">
                 <div className="text-2xl font-bold text-white">{p.price}</div>
@@ -540,6 +540,35 @@ export default function PropertyDetail() {
               ))}
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Mobile sticky contact bar — hidden on desktop */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-100 shadow-xl px-4 py-3">
+        <div className="flex items-center gap-2 mb-2">
+          <div className="flex-1 min-w-0">
+            <div className="text-base font-bold text-primary truncate">{p.price}</div>
+            <div className="text-xs text-gray-400 truncate">{p.title}</div>
+          </div>
+          <button
+            onClick={() => favCtx?.toggle(p.id)}
+            className={`w-9 h-9 rounded-xl border flex items-center justify-center flex-shrink-0 transition-all
+              ${isFav ? 'bg-red-500 text-white border-red-500' : 'border-gray-200 text-gray-400'}`}>
+            <i className={`${isFav ? 'fas' : 'far'} fa-heart text-sm`} />
+          </button>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => user ? setShowViewingModal(true) : toast('Please sign in to book a viewing', 'error')}
+            className="flex-1 btn-primary justify-center py-2.5 text-sm">
+            <i className="fas fa-calendar-check" /> Book Viewing
+          </button>
+          <a
+            href={`https://wa.me/${p.agent.phone.replace(/\D/g,'')}?text=${encodeURIComponent(`Hi, I'm interested in: ${p.title}`)}`}
+            target="_blank" rel="noreferrer"
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-[#25d366] hover:bg-[#128c7e] text-white font-bold text-sm rounded-xl transition-all">
+            <i className="fab fa-whatsapp" /> WhatsApp
+          </a>
         </div>
       </div>
 

@@ -160,35 +160,42 @@ export default function Search() {
       <div className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-30">
         <div className="max-w-screen-2xl mx-auto">
 
-          <div className="flex items-center gap-3 px-4 py-3 border-b border-gray-100">
-            <Link to="/" className="font-display text-lg font-bold text-primary flex items-center gap-1.5 flex-shrink-0">
-              <i className="fas fa-home text-accent" style={{fontSize:15}} /> Hestia
+          <div className="flex items-center gap-2 px-3 py-2.5 border-b border-gray-100">
+            <Link to="/" className="font-display text-base font-bold text-primary flex items-center gap-1.5 flex-shrink-0">
+              <i className="fas fa-home text-accent" style={{fontSize:14}} />
+              <span className="hidden sm:inline">Hestia</span>
             </Link>
             <button onClick={() => navigate('/')}
-              className="flex-1 flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-xl text-sm text-gray-500 hover:bg-gray-200 transition-colors text-left max-w-md">
-              <i className="fas fa-search text-gray-400 text-xs" />
-              <span className="truncate">{filters.location || t('search_page.allTunisia')}{filters.type ? ` · ${filters.type}` : ''}{filters.rooms ? ` · ${filters.rooms}+ beds` : ''}</span>
-              {activeFilters.length > 0 && <i className="fas fa-times text-gray-400 text-xs ml-auto" onClick={e => { e.stopPropagation(); clearAll() }} />}
+              className="flex-1 flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-xl text-sm text-gray-500 hover:bg-gray-200 transition-colors text-left">
+              <i className="fas fa-search text-gray-400 text-xs flex-shrink-0" />
+              <span className="truncate text-xs sm:text-sm">
+                {filters.location || t('search_page.allTunisia')}
+                {filters.type ? ` · ${filters.type}` : ''}
+                {filters.rooms ? ` · ${filters.rooms}+` : ''}
+              </span>
+              {activeFilters.length > 0 && <i className="fas fa-times text-gray-400 text-xs ml-auto flex-shrink-0" onClick={e => { e.stopPropagation(); clearAll() }} />}
             </button>
-            <div className="ml-auto flex items-center gap-2 flex-shrink-0">
-              <span className="text-sm text-gray-400 hidden sm:block"><strong className="text-gray-800">{filtered.length}</strong> {t('search_page.results')}</span>
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              <span className="text-xs text-gray-400 hidden sm:block font-medium">
+                <strong className="text-gray-800">{filtered.length}</strong> {t('search_page.results')}
+              </span>
               {user && (
                 <button onClick={() => setShowSS(true)}
                   className="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-primary border border-primary/30 px-3 py-1.5 rounded-full hover:bg-primary-soft transition-all">
-                  <i className="fas fa-bell text-xs" /> Save Search
+                  <i className="fas fa-bell text-xs" /> Save
                 </button>
               )}
               <select value={sort} onChange={e => setSort(e.target.value)}
-                className="text-sm border border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-primary bg-white font-medium text-gray-600">
+                className="text-xs border border-gray-200 rounded-lg px-2 py-2 outline-none focus:border-primary bg-white font-medium text-gray-600 max-w-[90px] sm:max-w-none sm:text-sm sm:px-3">
                 <option value="relevance">{t('search_page.sortRelevance')}</option>
                 <option value="newest">{t('search_page.sortNewest')}</option>
                 <option value="price_asc">{t('search_page.sortPriceAsc')}</option>
                 <option value="price_desc">{t('search_page.sortPriceDesc')}</option>
                 <option value="area_desc">{t('search_page.sortAreaDesc')}</option>
               </select>
-              <div className="flex rounded-xl overflow-hidden border border-gray-200">
-                <button onClick={() => setView('list')} className={`px-3 py-2 text-sm font-semibold transition-all ${view==='list'?'bg-primary text-white':'bg-white text-gray-500 hover:bg-gray-50'}`}><i className="fas fa-th-large text-xs" /></button>
-                <button onClick={() => setView('map')}  className={`px-3 py-2 text-sm font-semibold transition-all border-l border-gray-200 ${view==='map'?'bg-primary text-white':'bg-white text-gray-500 hover:bg-gray-50'}`}><i className="fas fa-map text-xs" /></button>
+              <div className="flex rounded-lg overflow-hidden border border-gray-200">
+                <button onClick={() => setView('list')} className={`px-2.5 py-2 text-sm font-semibold transition-all ${view==='list'?'bg-primary text-white':'bg-white text-gray-500'}`}><i className="fas fa-th-large text-xs" /></button>
+                <button onClick={() => setView('map')}  className={`px-2.5 py-2 text-sm font-semibold transition-all border-l border-gray-200 ${view==='map'?'bg-primary text-white':'bg-white text-gray-500'}`}><i className="fas fa-map text-xs" /></button>
               </div>
             </div>
           </div>

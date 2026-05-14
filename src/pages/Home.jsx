@@ -204,7 +204,7 @@ export default function Home() {
             <i className="fas fa-award text-accent" style={{fontSize:12}} />
             {t('hero.badge')}
           </div>
-          <h1 className="font-display text-5xl md:text-6xl text-white text-center font-bold leading-tight mb-3">
+          <h1 className="font-display text-4xl sm:text-5xl md:text-6xl text-white text-center font-bold leading-tight mb-3">
             {t('hero.headline')} <span className="text-accent">{t('hero.highlight')}</span>
           </h1>
           <p className="text-white/70 text-center text-lg mb-8 max-w-xl">{t('hero.sub')}</p>
@@ -255,11 +255,11 @@ export default function Home() {
 
         {/* Stats */}
         <div className="relative z-10 bg-black/20 backdrop-blur-sm border-t border-white/10">
-          <div className="max-w-4xl mx-auto flex justify-around py-5 px-4">
+          <div className="max-w-4xl mx-auto grid grid-cols-4 py-4 px-2">
             {[['2,500+',t('hero.stats.properties')],['180+',t('hero.stats.agents')],['4,000+',t('hero.stats.clients')],['12',t('hero.stats.governorates')]].map(([n,l]) => (
-              <div key={l} className="text-center">
-                <div className="text-2xl font-bold text-white">{n}</div>
-                <div className="text-xs text-white/60 uppercase tracking-wide mt-0.5">{l}</div>
+              <div key={l} className="text-center px-1">
+                <div className="text-lg sm:text-2xl font-bold text-white">{n}</div>
+                <div className="text-xs text-white/60 uppercase tracking-wide mt-0.5 leading-tight">{l}</div>
               </div>
             ))}
           </div>
@@ -385,7 +385,7 @@ export default function Home() {
             <div className="text-xs font-bold text-primary uppercase tracking-widest mb-1">{t('home.whyTag')}</div>
             <h2 className="font-display text-3xl font-bold text-gray-900">{t('home.whyTitle')}</h2>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {[
               ['fa-shield-alt','bg-primary-soft text-primary',  t('home.features.verifiedTitle'),  t('home.features.verifiedDesc')],
               ['fa-map-marked-alt','bg-blue-50 text-blue-600',  t('home.features.mapTitle'),       t('home.features.mapDesc')],
@@ -418,7 +418,7 @@ export default function Home() {
             </div>
             <h2 className="font-display text-3xl font-bold text-white mb-4">{t('home.agentTitle')}</h2>
             <p className="text-white/70 mb-6 leading-relaxed max-w-lg">{t('home.agentDesc')}</p>
-            <div className="grid grid-cols-2 gap-4 mb-8 max-w-sm mx-auto lg:mx-0">
+          <div className="grid grid-cols-2 gap-3 mb-8 max-w-sm mx-auto lg:mx-0">
               {[
                 ['fa-chart-line','Lead Tracking'],
                 ['fa-bullhorn','Smart Marketing'],
@@ -440,7 +440,7 @@ export default function Home() {
           </div>
 
           {/* Dashboard mockup */}
-          <div className="flex-1 max-w-md w-full">
+          <div className="flex-1 max-w-md w-full hidden lg:block">
             <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
               <div className="bg-primary-dark px-4 py-3 flex items-center gap-2">
                 <div className="flex gap-1.5">
@@ -523,7 +523,7 @@ export default function Home() {
 
       {/* ── FOOTER ── */}
       <footer className="bg-gray-900 text-white py-12 px-4">
-        <div className="max-w-6xl mx-auto grid md:grid-cols-4 gap-8 mb-8">
+        <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
           <div>
             <div className="font-display text-2xl mb-3 flex items-center gap-2">
               <i className="fas fa-home text-accent" style={{fontSize:16}} /> Hestia
