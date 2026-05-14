@@ -32,7 +32,7 @@ export default function PropertyDetail() {
     <div className="min-h-screen flex items-center justify-center flex-col gap-4 bg-gray-50">
       <i className="fas fa-home text-6xl text-gray-200" />
       <h2 className="text-2xl font-bold text-gray-600">Property not found</h2>
-      <button onClick={() => navigate('/')} className="btn-primary">
+      <button onClick={() => navigate('/search')} className="btn-primary">
         <i className="fas fa-arrow-left" /> Back to listings
       </button>
     </div>
@@ -97,7 +97,21 @@ export default function PropertyDetail() {
   }
 
   function copyLink() {
-    navigator.clipboard.writeText(window.location.href).then(() => toast('Link copied to clipboard', 'success'))
+    navigator.clipboard.writeText(window.location.href)
+      .then(() => toast('Link copied!', 'success'))
+      .catch(() => toast('Could not copy link', 'error'))
+  }
+
+  function handleShare() {
+    if (navigator.share) {
+      navigator.share({
+        title: p.title,
+        text: `${p.price} — ${p.title}`,
+        url: window.location.href,
+      }).catch(() => {}) // user cancelled — no error needed
+    } else {
+      copyLink()
+    }
   }
 
   const TABS = [
@@ -112,7 +126,7 @@ export default function PropertyDetail() {
 
       {/* NAV */}
       <nav className="sticky top-0 z-50 bg-white border-b border-gray-100 px-4 h-14 flex items-center justify-between shadow-sm">
-        <button onClick={() => navigate('/')} className="flex items-center gap-2 text-gray-500 hover:text-primary font-semibold text-sm transition-colors">
+        <button onClick={() => window.history.length > 1 ? navigate(-1) : navigate('/search')} className="flex items-center gap-2 text-gray-500 hover:text-primary font-semibold text-sm transition-colors">
           <i className="fas fa-arrow-left" /> Back to listings
         </button>
         <div className="font-display text-xl text-primary flex items-center gap-2">
@@ -123,7 +137,7 @@ export default function PropertyDetail() {
             className={`text-sm py-1.5 px-3 rounded-lg border flex items-center gap-1.5 font-semibold transition-all ${isFav ? 'bg-red-500 text-white border-red-500' : 'border-gray-200 text-gray-500 hover:border-red-400 hover:text-red-400'}`}>
             <i className={`${isFav ? 'fas' : 'far'} fa-heart text-xs`} /> {isFav ? 'Saved' : 'Save'}
           </button>
-          <button onClick={copyLink} className="btn-ghost text-sm py-1.5 px-3">
+          <button onClick={handleShare} className="btn-ghost text-sm py-1.5 px-3">
             <i className="fas fa-share-alt" /> Share
           </button>
           <button onClick={contactWhatsApp} className="bg-[#25d366] hover:bg-[#128c7e] text-white font-semibold text-sm py-1.5 px-3 rounded-lg inline-flex items-center gap-1.5 transition-all">

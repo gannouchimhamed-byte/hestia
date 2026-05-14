@@ -121,7 +121,9 @@ export default function AgentLayout() {
             <i className="fas fa-bars" />
           </button>
           <div className="flex-1" />
-          <button className="relative text-gray-400 hover:text-gray-700">
+          <button
+            onClick={() => { /* navigate to messages */ window.location.href = '/agent/messages' }}
+            className="relative text-gray-400 hover:text-gray-700 transition-colors">
             <i className="fas fa-bell" />
             <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">3</span>
           </button>
