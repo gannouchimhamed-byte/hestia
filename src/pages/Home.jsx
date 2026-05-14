@@ -280,36 +280,33 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── NEW PROJECTS full-bleed banner ── */}
-      <section className="py-12 px-4" style={{background:'linear-gradient(135deg,#0f3d2e 0%,#1a5f4a 60%,#124a3a 100%)'}}>
+      {/* ── NEW PROJECTS — warm cream Option A ── */}
+      <section className="py-12 px-4" style={{background:'#fef9e8'}}>
         <div className="max-w-7xl mx-auto">
-          {/* Header */}
           <div className="flex items-end justify-between mb-6">
             <div>
-              <div className="text-xs font-bold text-accent uppercase tracking-widest mb-1">Off-plan &amp; new launch</div>
-              <h2 className="font-display text-2xl font-bold text-white">{t('home.newProjectsTitle')}</h2>
-              <p className="text-white/60 text-sm mt-1">Invest early, save more — direct from developers</p>
+              <div className="text-xs font-bold uppercase tracking-widest mb-1" style={{color:'#b45309'}}>Off-plan &amp; new launch</div>
+              <h2 className="font-display text-2xl font-bold text-gray-900">{t('home.newProjectsTitle')}</h2>
+              <p className="text-sm mt-1 text-gray-400">Invest early, save more — direct from developers</p>
             </div>
             <Link to="/search?type=new"
-              className="text-sm font-semibold text-accent hover:underline flex items-center gap-1">
+              className="text-sm font-semibold text-primary hover:underline flex items-center gap-1">
               View all <i className="fas fa-arrow-right text-xs" />
             </Link>
           </div>
 
-          {/* Project cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {NEW_PROJECTS.map((p, i) => <ProjectCard key={i} p={p} />)}
           </div>
 
-          {/* Trust bar */}
-          <div className="mt-8 pt-6 border-t border-white/10 flex items-center gap-8 flex-wrap">
+          <div className="mt-8 pt-6 flex items-center gap-8 flex-wrap" style={{borderTop:'1px solid #e8b93133'}}>
             {[
               ['fa-shield-alt','Verified developers only'],
               ['fa-file-contract','Secure payment handling'],
               ['fa-headset','Dedicated project advisors'],
             ].map(([icon, label]) => (
-              <div key={label} className="flex items-center gap-2 text-white/60 text-sm">
-                <i className={`fas ${icon} text-accent`} style={{fontSize:13}} />
+              <div key={label} className="flex items-center gap-2 text-sm text-gray-400">
+                <i className={`fas ${icon}`} style={{fontSize:13, color:'#b45309'}} />
                 {label}
               </div>
             ))}
