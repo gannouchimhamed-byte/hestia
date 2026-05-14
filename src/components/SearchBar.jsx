@@ -1,51 +1,67 @@
 import { useState, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { CITIES } from '../lib/data'
 
 const SHORTCUTS = [
-  { icon: 'fa-building',    label: 'Apartments', type: 'apartment' },
-  { icon: 'fa-home',        label: 'Villas',     type: 'villa' },
-  { icon: 'fa-briefcase',   label: 'Offices',    type: 'office' },
-  { icon: 'fa-mountain',    label: 'Land',       type: 'land' },
-  { icon: 'fa-store',       label: 'Commercial', type: 'commercial' },
+  { icon: 'fa-building',  label: 'Apartments', type: 'apartment' },
+  { icon: 'fa-home',      label: 'Villas',     type: 'villa'     },
+  { icon: 'fa-briefcase', label: 'Offices',    type: 'office'    },
+  { icon: 'fa-mountain',  label: 'Land',       type: 'land'      },
+  { icon: 'fa-store',     label: 'Commercial', type: 'commercial'},
 ]
 
-export default function SearchBar({ onSearch }) {
-  const [deal, setDeal]       = useState('sale')
-  const [location, setLoc]    = useState('')
-  const [type, setType]       = useState('')
-  const [rooms, setRooms]     = useState('')
-  const [price, setPrice]     = useState('')
+export default function SearchBar({ onSearch, navigateOnSearch = false }) {
+  const navigate = useNavigate()
+  const [deal, setDeal]         = useState('sale')
+  const [location, setLoc]      = useState('')
+  const [type, setType]         = useState('')
+  const [rooms, setRooms]       = useState('')
+  const [price, setPrice]       = useState('')
   const [showSugg, setShowSugg] = useState(false)
-  const [showAdv, setShowAdv]  = useState(false)
-  const [adv, setAdv]         = useState({})
-  const inputRef = useRef(null)
+  const [showAdv, setShowAdv]   = useState(false)
+  const [adv, setAdv]           = useState({})
 
   const suggestions = location.trim()
     ? CITIES.filter(c => c.toLowerCase().includes(location.toLowerCase())).slice(0, 6)
     : []
 
+  function buildParams() {
+    const p = new URLSearchParams()
+    if (deal)         p.set('deal', deal)
+    if (location)     p.set('location', location)
+    if (type)         p.set('type', type)
+    if (rooms)        p.set('rooms', rooms)
+    if (price)        p.set('price', price)
+    if (adv.condition) p.set('condition', adv.condition)
+    if (adv.furnished) p.set('furnished', adv.furnished)
+    if (adv.parking)   p.set('parking', adv.parking)
+    if (adv.elevator)  p.set('elevator', adv.elevator)
+    return p.toString()
+  }
+
   function search() {
-    onSearch?.({ deal, location, type, rooms, price, ...adv })
+    if (navigateOnSearch || onSearch == null) {
+      navigate('/search?' + buildParams())
+    } else {
+      onSearch({ deal, location, type, rooms, price, ...adv })
+    }
     setShowSugg(false)
   }
 
   function shortcut(t) {
     setType(t)
-    onSearch?.({ deal, location, type: t, rooms, price })
+    navigate('/search?' + new URLSearchParams({ deal, location, type: t, rooms, price }).toString())
   }
 
   return (
     <div className="w-full max-w-3xl">
       {/* Deal tabs */}
       <div className="flex rounded-t-2xl overflow-hidden border border-white/20">
-        {[['sale','Buy'],['rent','Rent'],['commercial','Commercial']].map(([v, l]) => (
+        {[['sale','Buy'],['rent','Rent'],['commercial','Commercial']].map(([v,l]) => (
           <button key={v} onClick={() => setDeal(v)}
             className={`flex-1 py-3 text-sm font-bold transition-all ${
-              deal === v
-                ? 'bg-white text-primary'
-                : 'bg-white/10 text-white/80 hover:bg-white/20 backdrop-blur-sm'
-            }`}>
-            {l}
+              deal === v ? 'bg-white text-primary' : 'bg-white/10 text-white/80 hover:bg-white/20 backdrop-blur-sm'
+            }`}>{l}
           </button>
         ))}
       </div>
@@ -53,21 +69,17 @@ export default function SearchBar({ onSearch }) {
       {/* Main row */}
       <div className="bg-white rounded-b-2xl shadow-2xl">
         <div className="flex items-stretch divide-x divide-gray-100">
-
           {/* Location */}
           <div className="flex-1 relative min-w-0">
             <div className="flex items-center h-14 px-4 gap-3">
               <i className="fas fa-map-marker-alt text-primary flex-shrink-0" style={{fontSize:14}} />
-              <input
-                ref={inputRef}
-                value={location}
+              <input value={location}
                 onChange={e => { setLoc(e.target.value); setShowSugg(true) }}
                 onFocus={() => setShowSugg(true)}
                 onBlur={() => setTimeout(() => setShowSugg(false), 150)}
                 onKeyDown={e => e.key === 'Enter' && search()}
                 placeholder="City, neighbourhood or address..."
-                className="flex-1 text-sm font-medium outline-none placeholder-gray-400 text-gray-800 bg-transparent"
-              />
+                className="flex-1 text-sm font-medium outline-none placeholder-gray-400 text-gray-800 bg-transparent" />
               {location && (
                 <button onClick={() => setLoc('')} className="text-gray-300 hover:text-gray-400 flex-shrink-0">
                   <i className="fas fa-times text-xs" />
@@ -116,7 +128,7 @@ export default function SearchBar({ onSearch }) {
             <option value="1000000+">1M+</option>
           </select>
 
-          {/* Search */}
+          {/* Search button */}
           <button onClick={search}
             className="h-14 px-7 bg-primary hover:bg-primary-dark text-white font-bold text-sm flex items-center gap-2 transition-all rounded-br-2xl flex-shrink-0">
             <i className="fas fa-search" />
@@ -124,22 +136,21 @@ export default function SearchBar({ onSearch }) {
           </button>
         </div>
 
-        {/* More filters row */}
+        {/* More filters */}
         <div className="border-t border-gray-100 px-4 py-2.5 flex items-center gap-4">
           <button onClick={() => setShowAdv(a => !a)}
             className="text-xs font-semibold text-primary flex items-center gap-1.5 hover:underline">
-            <i className={`fas fa-sliders-h text-xs`} />
+            <i className="fas fa-sliders-h text-xs" />
             {showAdv ? 'Hide filters' : 'More filters'}
           </button>
           {(type || rooms || price || adv.condition) && (
             <button onClick={() => { setType(''); setRooms(''); setPrice(''); setAdv({}) }}
               className="text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1">
-              <i className="fas fa-times text-xs" /> Clear all
+              <i className="fas fa-times text-xs" /> Clear
             </button>
           )}
         </div>
 
-        {/* Advanced */}
         {showAdv && (
           <div className="px-4 pb-4 grid grid-cols-2 sm:grid-cols-4 gap-3 border-t border-gray-100 pt-4">
             {[
@@ -160,7 +171,7 @@ export default function SearchBar({ onSearch }) {
         )}
       </div>
 
-      {/* Shortcuts */}
+      {/* Category shortcuts */}
       <div className="flex gap-2 flex-wrap mt-4 justify-center">
         {SHORTCUTS.map(s => (
           <button key={s.type} onClick={() => shortcut(s.type)}

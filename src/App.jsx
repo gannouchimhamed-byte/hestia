@@ -4,6 +4,7 @@ import { ToastProvider } from './hooks/useToast'
 import Navbar from './components/Navbar'
 import Home from './pages/Home'
 import PropertyDetail from './pages/PropertyDetail'
+import Search from './pages/Search'
 import AgentLayout from './layouts/AgentLayout'
 import AdminLayout from './layouts/AdminLayout'
 import AgentDashboard from './pages/Agent/Dashboard'
@@ -25,6 +26,7 @@ export default function App() {
             {/* Client site */}
             <Route path="/" element={<><Navbar /><Home /></>} />
             <Route path="/property/:id" element={<PropertyDetail />} />
+            <Route path="/search" element={<><Navbar /><Search /></>} />
 
             {/* Agent dashboard */}
             <Route path="/agent" element={<AgentLayout />}>
