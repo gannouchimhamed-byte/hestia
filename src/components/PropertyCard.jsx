@@ -1,12 +1,13 @@
-import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { getDaysOld, getFreshnessTier } from '../lib/data'
+import { useFavCtx } from '../hooks/FavoritesContext'
 
 export default function PropertyCard({ p, view = 'grid', onHover, highlighted }) {
   const navigate = useNavigate()
   const { t } = useTranslation()
-  const [fav, setFav] = useState(false)
+  const favCtx = useFavCtx()
+  const fav = favCtx ? favCtx.favIds.has(String(p.id)) : false
   const tier    = getFreshnessTier(p)
   const days    = getDaysOld(p.listedAt)
   const ageLabel = days === 0
@@ -60,7 +61,7 @@ export default function PropertyCard({ p, view = 'grid', onHover, highlighted })
         {/* Actions */}
         <div className="absolute top-3 right-3 flex flex-col gap-1.5">
           <button
-            onClick={e => { e.stopPropagation(); setFav(f => !f) }}
+            onClick={e => { e.stopPropagation(); favCtx ? favCtx.toggle(p.id) : null }}
             className={`w-8 h-8 rounded-full flex items-center justify-center shadow-md transition-all ${fav ? 'bg-red-500 text-white' : 'bg-white text-gray-400 hover:text-red-400'}`}
           >
             <i className={`${fav ? 'fas' : 'far'} fa-heart text-xs`} />

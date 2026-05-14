@@ -16,17 +16,21 @@ import AgentMessages from './pages/Agent/Messages'
 import AdminDashboard from './pages/Admin/Dashboard'
 import AdminListings from './pages/Admin/Listings'
 import { AdminAgents, AdminFlags, AdminHealth, AdminActivity, AdminBroadcast, AdminUsers } from './pages/Admin/Pages'
+import { FavoritesProvider } from './hooks/FavoritesContext'
+import Account from './pages/Account'
 
 export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
         <ToastProvider>
+          <FavoritesProvider>
           <Routes>
             {/* Client site */}
             <Route path="/" element={<><Navbar /><Home /></>} />
             <Route path="/property/:id" element={<PropertyDetail />} />
             <Route path="/search" element={<><Navbar /><Search /></>} />
+            <Route path="/account" element={<><Navbar /><Account /></>} />
 
             {/* Agent dashboard */}
             <Route path="/agent" element={<AgentLayout />}>
@@ -50,6 +54,7 @@ export default function App() {
               <Route path="broadcast" element={<AdminBroadcast />} />
             </Route>
           </Routes>
+          </FavoritesProvider>
         </ToastProvider>
       </AuthProvider>
     </BrowserRouter>

@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useSearchParams, useNavigate, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { sb } from '../lib/supabase'
+import { useAuth } from '../hooks/useAuth'
 import PropertyCard from '../components/PropertyCard'
 import PropertyMap from '../components/PropertyMap'
 import { properties as ALL, getDaysOld } from '../lib/data'
@@ -66,6 +68,73 @@ function NewProjectAd() {
           Learn More
         </button>
       </div>
+
+
+      {/* Save Search Modal */}
+      {showSaveSearch && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => setShowSaveSearch(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6" onClick={e => e.stopPropagation()}>
+            {saved ? (
+              <div className="text-center py-4">
+                <div className="w-14 h-14 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <i className="fas fa-check text-emerald-600 text-xl" />
+                </div>
+                <p className="font-semibold text-gray-900">Search saved!</p>
+                <p className="text-sm text-gray-400 mt-1">We'll alert you when new properties match.</p>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between mb-5">
+                  <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                    <i className="fas fa-bell text-primary" /> Save this Search
+                  </h3>
+                  <button onClick={() => setShowSaveSearch(false)} className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400">
+                    <i className="fas fa-times text-sm" />
+                  </button>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-3 mb-4 text-xs text-gray-500">
+                  <div className="flex flex-wrap gap-1.5">
+                    {Array.from(searchParams.entries()).filter(([k]) => k !== 'deal' || searchParams.get(k) !== 'sale').map(([k, v]) => (
+                      <span key={k} className="bg-primary-soft text-primary px-2 py-0.5 rounded-full font-semibold capitalize">{v}</span>
+                    ))}
+                    {!searchParams.toString() && <span className="text-gray-400">All properties in Tunisia</span>}
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-400 mb-1.5">Search name *</label>
+                    <input value={searchName} onChange={e => setSearchName(e.target.value)}
+                      placeholder="e.g. 3-bed villas in Tunis" className="input" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-400 mb-1.5">Alert frequency</label>
+                    <div className="flex gap-2">
+                      {[['instant','Instant'],['daily','Daily'],['weekly','Weekly']].map(([v, l]) => (
+                        <button key={v} onClick={() => setSaveFreq(v)}
+                          className={`flex-1 py-2 text-xs font-semibold rounded-xl border transition-all ${saveFreq === v ? 'bg-primary text-white border-primary' : 'border-gray-200 text-gray-500 hover:border-primary hover:text-primary'}`}>
+                          {l}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-400 flex items-start gap-1.5">
+                    <i className="fas fa-envelope text-primary mt-0.5" style={{fontSize:11}} />
+                    We'll email you when new matching properties are listed.
+                  </p>
+                </div>
+                <div className="flex gap-2 mt-5">
+                  <button onClick={() => setShowSaveSearch(false)} className="btn-ghost flex-1 justify-center py-2.5 text-sm">Cancel</button>
+                  <button onClick={saveSearch} disabled={saving || !searchName.trim()}
+                    className="btn-primary flex-1 justify-center py-2.5 text-sm disabled:opacity-50">
+                    {saving ? <i className="fas fa-circle-notch fa-spin" /> : <i className="fas fa-bell" />}
+                    Save & Alert
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -98,6 +167,73 @@ function FeaturedAgentAd() {
         className="w-full flex items-center justify-center gap-2 py-2 bg-[#25d366] hover:bg-[#128c7e] text-white font-bold text-xs rounded-xl transition-all">
         <i className="fab fa-whatsapp" /> Contact Agent
       </a>
+
+
+      {/* Save Search Modal */}
+      {showSaveSearch && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => setShowSaveSearch(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6" onClick={e => e.stopPropagation()}>
+            {saved ? (
+              <div className="text-center py-4">
+                <div className="w-14 h-14 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <i className="fas fa-check text-emerald-600 text-xl" />
+                </div>
+                <p className="font-semibold text-gray-900">Search saved!</p>
+                <p className="text-sm text-gray-400 mt-1">We'll alert you when new properties match.</p>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between mb-5">
+                  <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                    <i className="fas fa-bell text-primary" /> Save this Search
+                  </h3>
+                  <button onClick={() => setShowSaveSearch(false)} className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400">
+                    <i className="fas fa-times text-sm" />
+                  </button>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-3 mb-4 text-xs text-gray-500">
+                  <div className="flex flex-wrap gap-1.5">
+                    {Array.from(searchParams.entries()).filter(([k]) => k !== 'deal' || searchParams.get(k) !== 'sale').map(([k, v]) => (
+                      <span key={k} className="bg-primary-soft text-primary px-2 py-0.5 rounded-full font-semibold capitalize">{v}</span>
+                    ))}
+                    {!searchParams.toString() && <span className="text-gray-400">All properties in Tunisia</span>}
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-400 mb-1.5">Search name *</label>
+                    <input value={searchName} onChange={e => setSearchName(e.target.value)}
+                      placeholder="e.g. 3-bed villas in Tunis" className="input" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-400 mb-1.5">Alert frequency</label>
+                    <div className="flex gap-2">
+                      {[['instant','Instant'],['daily','Daily'],['weekly','Weekly']].map(([v, l]) => (
+                        <button key={v} onClick={() => setSaveFreq(v)}
+                          className={`flex-1 py-2 text-xs font-semibold rounded-xl border transition-all ${saveFreq === v ? 'bg-primary text-white border-primary' : 'border-gray-200 text-gray-500 hover:border-primary hover:text-primary'}`}>
+                          {l}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-400 flex items-start gap-1.5">
+                    <i className="fas fa-envelope text-primary mt-0.5" style={{fontSize:11}} />
+                    We'll email you when new matching properties are listed.
+                  </p>
+                </div>
+                <div className="flex gap-2 mt-5">
+                  <button onClick={() => setShowSaveSearch(false)} className="btn-ghost flex-1 justify-center py-2.5 text-sm">Cancel</button>
+                  <button onClick={saveSearch} disabled={saving || !searchName.trim()}
+                    className="btn-primary flex-1 justify-center py-2.5 text-sm disabled:opacity-50">
+                    {saving ? <i className="fas fa-circle-notch fa-spin" /> : <i className="fas fa-bell" />}
+                    Save & Alert
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -122,6 +258,73 @@ function MortgageAd() {
         <div className="text-xl font-bold text-primary mt-0.5">{monthly.toLocaleString()} TND</div>
         <div className="text-xs text-gray-400 mt-0.5">20% down · 25yr · 7.5%</div>
       </div>
+
+
+      {/* Save Search Modal */}
+      {showSaveSearch && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => setShowSaveSearch(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6" onClick={e => e.stopPropagation()}>
+            {saved ? (
+              <div className="text-center py-4">
+                <div className="w-14 h-14 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <i className="fas fa-check text-emerald-600 text-xl" />
+                </div>
+                <p className="font-semibold text-gray-900">Search saved!</p>
+                <p className="text-sm text-gray-400 mt-1">We'll alert you when new properties match.</p>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between mb-5">
+                  <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                    <i className="fas fa-bell text-primary" /> Save this Search
+                  </h3>
+                  <button onClick={() => setShowSaveSearch(false)} className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400">
+                    <i className="fas fa-times text-sm" />
+                  </button>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-3 mb-4 text-xs text-gray-500">
+                  <div className="flex flex-wrap gap-1.5">
+                    {Array.from(searchParams.entries()).filter(([k]) => k !== 'deal' || searchParams.get(k) !== 'sale').map(([k, v]) => (
+                      <span key={k} className="bg-primary-soft text-primary px-2 py-0.5 rounded-full font-semibold capitalize">{v}</span>
+                    ))}
+                    {!searchParams.toString() && <span className="text-gray-400">All properties in Tunisia</span>}
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-400 mb-1.5">Search name *</label>
+                    <input value={searchName} onChange={e => setSearchName(e.target.value)}
+                      placeholder="e.g. 3-bed villas in Tunis" className="input" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-400 mb-1.5">Alert frequency</label>
+                    <div className="flex gap-2">
+                      {[['instant','Instant'],['daily','Daily'],['weekly','Weekly']].map(([v, l]) => (
+                        <button key={v} onClick={() => setSaveFreq(v)}
+                          className={`flex-1 py-2 text-xs font-semibold rounded-xl border transition-all ${saveFreq === v ? 'bg-primary text-white border-primary' : 'border-gray-200 text-gray-500 hover:border-primary hover:text-primary'}`}>
+                          {l}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-400 flex items-start gap-1.5">
+                    <i className="fas fa-envelope text-primary mt-0.5" style={{fontSize:11}} />
+                    We'll email you when new matching properties are listed.
+                  </p>
+                </div>
+                <div className="flex gap-2 mt-5">
+                  <button onClick={() => setShowSaveSearch(false)} className="btn-ghost flex-1 justify-center py-2.5 text-sm">Cancel</button>
+                  <button onClick={saveSearch} disabled={saving || !searchName.trim()}
+                    className="btn-primary flex-1 justify-center py-2.5 text-sm disabled:opacity-50">
+                    {saving ? <i className="fas fa-circle-notch fa-spin" /> : <i className="fas fa-bell" />}
+                    Save & Alert
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -129,7 +332,13 @@ function MortgageAd() {
 // ── Main Search page ─────────────────────────────────────────────
 export default function Search() {
   const { t } = useTranslation()
+  const { user } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
+  const [showSaveSearch, setShowSaveSearch] = useState(false)
+  const [searchName, setSearchName] = useState('')
+  const [saveFreq, setSaveFreq] = useState('daily')
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
   const navigate = useNavigate()
   const listRef  = useRef(null)
   const [view, setView]       = useState('list')  // list | map
@@ -159,6 +368,22 @@ export default function Search() {
   }
 
   function clearAll() { setSearchParams(new URLSearchParams({ deal: filters.deal })) }
+
+  async function saveSearch() {
+    if (!searchName.trim()) return
+    if (!user) { setShowSaveSearch(false); return }
+    setSaving(true)
+    await sb.from('saved_searches').insert({
+      user_id: user.id,
+      name: searchName,
+      filters: Object.fromEntries(searchParams.entries()),
+      freq: saveFreq,
+      alert_on: true,
+    })
+    setSaving(false)
+    setSaved(true)
+    setTimeout(() => { setShowSaveSearch(false); setSaved(false); setSearchName('') }, 1500)
+  }
 
   const handleMarkerClick = useCallback((id) => navigate(`/property/${id}`), [navigate])
   const handleHover = useCallback((id) => {
@@ -205,8 +430,12 @@ export default function Search() {
 
             <div className="ml-auto flex items-center gap-2 flex-shrink-0">
               <span className="text-sm text-gray-400 hidden sm:block">
-                <strong className="text-gray-800">{filtered.length}</strong> results
+                <strong className="text-gray-800">{filtered.length}</strong> {t('search_page.results')}
               </span>
+              <button onClick={() => user ? setShowSaveSearch(true) : null}
+                className="hidden sm:flex items-center gap-1.5 text-xs font-semibold text-primary border border-primary/30 px-3 py-1.5 rounded-full hover:bg-primary-soft transition-all">
+                <i className="fas fa-bell text-xs" /> Save Search
+              </button>
               {/* Sort */}
               <select value={sort} onChange={e => setSort(e.target.value)}
                 className="text-sm border border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-primary bg-white font-medium text-gray-600">
@@ -343,6 +572,73 @@ export default function Search() {
           </div>
           <div className="flex-1 hidden lg:block sticky top-[113px] h-[calc(100vh-113px)]">
             <PropertyMap properties={filtered} hoveredId={hoveredId} onMarkerClick={handleMarkerClick} className="w-full h-full" />
+          </div>
+        </div>
+      )}
+
+
+      {/* Save Search Modal */}
+      {showSaveSearch && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => setShowSaveSearch(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6" onClick={e => e.stopPropagation()}>
+            {saved ? (
+              <div className="text-center py-4">
+                <div className="w-14 h-14 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <i className="fas fa-check text-emerald-600 text-xl" />
+                </div>
+                <p className="font-semibold text-gray-900">Search saved!</p>
+                <p className="text-sm text-gray-400 mt-1">We'll alert you when new properties match.</p>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between mb-5">
+                  <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                    <i className="fas fa-bell text-primary" /> Save this Search
+                  </h3>
+                  <button onClick={() => setShowSaveSearch(false)} className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400">
+                    <i className="fas fa-times text-sm" />
+                  </button>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-3 mb-4 text-xs text-gray-500">
+                  <div className="flex flex-wrap gap-1.5">
+                    {Array.from(searchParams.entries()).filter(([k]) => k !== 'deal' || searchParams.get(k) !== 'sale').map(([k, v]) => (
+                      <span key={k} className="bg-primary-soft text-primary px-2 py-0.5 rounded-full font-semibold capitalize">{v}</span>
+                    ))}
+                    {!searchParams.toString() && <span className="text-gray-400">All properties in Tunisia</span>}
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-400 mb-1.5">Search name *</label>
+                    <input value={searchName} onChange={e => setSearchName(e.target.value)}
+                      placeholder="e.g. 3-bed villas in Tunis" className="input" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-400 mb-1.5">Alert frequency</label>
+                    <div className="flex gap-2">
+                      {[['instant','Instant'],['daily','Daily'],['weekly','Weekly']].map(([v, l]) => (
+                        <button key={v} onClick={() => setSaveFreq(v)}
+                          className={`flex-1 py-2 text-xs font-semibold rounded-xl border transition-all ${saveFreq === v ? 'bg-primary text-white border-primary' : 'border-gray-200 text-gray-500 hover:border-primary hover:text-primary'}`}>
+                          {l}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-400 flex items-start gap-1.5">
+                    <i className="fas fa-envelope text-primary mt-0.5" style={{fontSize:11}} />
+                    We'll email you when new matching properties are listed.
+                  </p>
+                </div>
+                <div className="flex gap-2 mt-5">
+                  <button onClick={() => setShowSaveSearch(false)} className="btn-ghost flex-1 justify-center py-2.5 text-sm">Cancel</button>
+                  <button onClick={saveSearch} disabled={saving || !searchName.trim()}
+                    className="btn-primary flex-1 justify-center py-2.5 text-sm disabled:opacity-50">
+                    {saving ? <i className="fas fa-circle-notch fa-spin" /> : <i className="fas fa-bell" />}
+                    Save & Alert
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

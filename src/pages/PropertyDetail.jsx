@@ -4,6 +4,9 @@ import { useState } from 'react'
 import { properties } from '../lib/data'
 import PropertyMap from '../components/PropertyMap'
 import { useToast } from '../hooks/useToast'
+import { useAuth } from '../hooks/useAuth'
+import { useFavCtx } from '../hooks/FavoritesContext'
+import { sb } from '../lib/supabase'
 
 const POI_ICONS = { school: 'fa-graduation-cap', hospital: 'fa-hospital', transport: 'fa-bus', shop: 'fa-shopping-cart' }
 
@@ -17,6 +20,13 @@ export default function PropertyDetail() {
   const [tab, setTab]           = useState('photos')
   const [msg, setMsg]           = useState("Hi, I'm interested in this property. Please contact me.")
   const [descOpen, setDescOpen] = useState(false)
+  const [sending, setSending] = useState(false)
+  const [viewingDate, setViewingDate] = useState('')
+  const [viewingTime, setViewingTime] = useState('10:00')
+  const [showViewingModal, setShowViewingModal] = useState(false)
+  const { user } = useAuth()
+  const favCtx = useFavCtx()
+  const isFav = favCtx ? favCtx.favIds.has(String(p?.id)) : false
 
   if (!p) return (
     <div className="min-h-screen flex items-center justify-center flex-col gap-4 bg-gray-50">
@@ -34,6 +44,52 @@ export default function PropertyDetail() {
     .slice(0,3)
 
   const daysOld = Math.floor((Date.now() - new Date(p.listedAt).getTime()) / 86400000)
+
+  async function sendEnquiryToDb() {
+    if (!msg.trim()) { toast('Please write a message first', 'error'); return }
+    setSending(true)
+    if (user) {
+      await sb.from('Inquiry').insert({
+        id: crypto.randomUUID(),
+        message: msg,
+        propertyId: String(p.id),
+        userId: user.id,
+        createdAt: new Date().toISOString(),
+      })
+      // Send email via edge function
+      try {
+        await fetch('https://cmxblqzulbgtlinmyqxl.supabase.co/functions/v1/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNteGJscXp1bGJndGxpbm15cXhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5OTc5NjUsImV4cCI6MjA5MzU3Mzk2NX0.CKdqvB84ELBEro0rYMnAJxKu9a9OV5G5R9mDDHUmGm0' },
+          body: JSON.stringify({
+            to: [p.agent.phone ? `${p.agent.name.toLowerCase().replace(' ','.')}@hestia.tn` : 'contact@hestia.tn'],
+            subject: `New enquiry: ${p.title}`,
+            html: `<p><b>Property:</b> ${p.title}</p><p><b>From:</b> ${user.email}</p><p><b>Message:</b> ${msg}</p>`
+          })
+        })
+      } catch(e) { /* email best-effort */ }
+    }
+    setSending(false)
+    toast('Enquiry sent! The agent will contact you shortly.', 'success')
+    setMsg('')
+  }
+
+  async function bookViewingToDb() {
+    if (!viewingDate || !viewingTime) { toast('Please select a date and time', 'error'); return }
+    if (!user) { toast('Please sign in to book a viewing', 'error'); return }
+    const { error } = await sb.from('viewings').insert({
+      user_id: user.id,
+      property_id: String(p.id),
+      property_title: p.title,
+      agent_name: p.agent.name,
+      viewing_date: viewingDate,
+      viewing_time: viewingTime,
+      status: 'pending',
+    })
+    if (error) { toast('Error booking viewing', 'error'); return }
+    setShowViewingModal(false)
+    toast('Viewing booked! The agent will confirm shortly.', 'success')
+  }
 
   function contactWhatsApp() {
     const clean = p.agent.phone.replace(/\D/g,'')
@@ -63,6 +119,10 @@ export default function PropertyDetail() {
           <i className="fas fa-home text-accent" style={{fontSize:14}} /> Hestia
         </div>
         <div className="flex gap-2">
+          <button onClick={() => favCtx?.toggle(p.id)}
+            className={`text-sm py-1.5 px-3 rounded-lg border flex items-center gap-1.5 font-semibold transition-all ${isFav ? 'bg-red-500 text-white border-red-500' : 'border-gray-200 text-gray-500 hover:border-red-400 hover:text-red-400'}`}>
+            <i className={`${isFav ? 'fas' : 'far'} fa-heart text-xs`} /> {isFav ? 'Saved' : 'Save'}
+          </button>
           <button onClick={copyLink} className="btn-ghost text-sm py-1.5 px-3">
             <i className="fas fa-share-alt" /> Share
           </button>
@@ -431,7 +491,7 @@ export default function PropertyDetail() {
               <div className="p-4 space-y-3">
                 <textarea value={msg} onChange={e => setMsg(e.target.value)} rows={3}
                   className="w-full text-sm border border-gray-200 rounded-xl px-3 py-2.5 outline-none focus:border-primary resize-none" />
-                <button onClick={() => toast('Enquiry sent! Agent will contact you shortly.', 'success')}
+                <button onClick={sendEnquiryToDb} disabled={sending}
                   className="btn-primary w-full justify-center py-3">
                   <i className="fas fa-paper-plane" /> Send Enquiry
                 </button>
@@ -439,7 +499,7 @@ export default function PropertyDetail() {
                   className="w-full justify-center py-2.5 bg-[#25d366] hover:bg-[#128c7e] text-white font-semibold rounded-lg transition-all flex items-center gap-2 text-sm">
                   <i className="fab fa-whatsapp" /> WhatsApp Agent
                 </button>
-                <button onClick={() => toast('Sign in to book a viewing')}
+                <button onClick={() => user ? setShowViewingModal(true) : toast('Please sign in to book a viewing', 'error')}
                   className="btn-ghost w-full justify-center py-2.5 text-sm">
                   <i className="fas fa-calendar-check" /> Book a Viewing
                 </button>
@@ -482,6 +542,58 @@ export default function PropertyDetail() {
           </div>
         </div>
       </div>
+
+
+      {/* Viewing booking modal */}
+      {showViewingModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => setShowViewingModal(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+                <i className="fas fa-calendar-check text-primary" /> Book a Viewing
+              </h3>
+              <button onClick={() => setShowViewingModal(false)} className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400">
+                <i className="fas fa-times text-sm" />
+              </button>
+            </div>
+            <div className="bg-gray-50 rounded-xl p-3 flex gap-3 mb-5">
+              <img src={p.images[0]} alt="" className="w-14 h-12 object-cover rounded-lg flex-shrink-0" />
+              <div className="min-w-0">
+                <div className="font-semibold text-sm text-gray-800 truncate">{p.title}</div>
+                <div className="text-xs text-gray-400 flex items-center gap-1 mt-0.5">
+                  <i className="fas fa-user-tie text-primary" style={{fontSize:10}} /> {p.agent.name}
+                </div>
+              </div>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-gray-400 mb-1.5">Preferred Date</label>
+                <input type="date" value={viewingDate} onChange={e => setViewingDate(e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
+                  className="input" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-400 mb-1.5">Preferred Time</label>
+                <select value={viewingTime} onChange={e => setViewingTime(e.target.value)} className="input">
+                  {['09:00','10:00','11:00','12:00','14:00','15:00','16:00','17:00'].map(t => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+              </div>
+              <p className="text-xs text-gray-400 flex items-start gap-1.5">
+                <i className="fas fa-info-circle text-primary mt-0.5" style={{fontSize:11}} />
+                The agent will confirm your viewing within 2 hours.
+              </p>
+            </div>
+            <div className="flex gap-2 mt-5">
+              <button onClick={() => setShowViewingModal(false)} className="btn-ghost flex-1 justify-center py-2.5 text-sm">Cancel</button>
+              <button onClick={bookViewingToDb} className="btn-primary flex-1 justify-center py-2.5 text-sm">
+                <i className="fas fa-calendar-check" /> Confirm Booking
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

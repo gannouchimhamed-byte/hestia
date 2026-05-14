@@ -97,6 +97,7 @@ export default function Navbar() {
             {user && (
               <button
                 title="Saved properties"
+                onClick={() => navigate('/account?tab=favorites')}
                 className={`hidden sm:flex w-9 h-9 items-center justify-center rounded-lg
                   ${text} hover:bg-primary/10 hover:text-primary transition-all relative`}>
                 <i className="far fa-heart text-sm" />
@@ -138,10 +139,10 @@ export default function Navbar() {
                     </div>
                     <div className="py-1">
                       {[
-                        ['fa-heart',         'Saved Properties',  () => {}],
-                        ['fa-calendar-check','My Viewings',        () => {}],
-                        ['fa-bell',          'My Alerts',          () => {}],
-                        ['fa-user-cog',      'Profile Settings',   () => {}],
+                        ['fa-heart',         'Saved Properties',  () => navigate('/account?tab=favorites')],
+                        ['fa-calendar-check','My Viewings',        () => navigate('/account?tab=viewings')],
+                        ['fa-bell',          'My Alerts',          () => navigate('/account?tab=searches')],
+                        ['fa-user-cog',      'Profile Settings',   () => navigate('/account?tab=profile')],
                       ].map(([icon, label, action]) => (
                         <button key={label} onClick={() => { action(); setDdOpen(false) }}
                           className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
