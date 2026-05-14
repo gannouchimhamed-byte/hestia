@@ -1,4 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
 import { properties } from '../lib/data'
 import PropertyMap from '../components/PropertyMap'
@@ -7,6 +8,7 @@ import { useToast } from '../hooks/useToast'
 const POI_ICONS = { school: 'fa-graduation-cap', hospital: 'fa-hospital', transport: 'fa-bus', shop: 'fa-shopping-cart' }
 
 export default function PropertyDetail() {
+  const { t } = useTranslation()
   const { id }    = useParams()
   const navigate  = useNavigate()
   const toast     = useToast()
@@ -162,9 +164,9 @@ export default function PropertyDetail() {
               <div className="flex gap-2">
                 {[
                   ['fab fa-whatsapp','WhatsApp', contactWhatsApp],
-                  ['fab fa-facebook-f','Facebook', () => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`)],
-                  ['fas fa-link','Copy link', copyLink],
-                  ['fas fa-print','Print', () => window.print()],
+                  ['fab fa-facebook-f',t('detail.facebook'), () => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`)],
+                  ['fas fa-link',t('detail.copyLink'), copyLink],
+                  ['fas fa-print',t('detail.print'), () => window.print()],
                 ].map(([icon, label, fn]) => (
                   <button key={label} onClick={fn}
                     className="flex items-center gap-1.5 text-xs font-semibold text-gray-500 hover:text-primary border border-gray-200 hover:border-primary px-3 py-1.5 rounded-lg transition-all">
@@ -202,8 +204,8 @@ export default function PropertyDetail() {
                   ['fa-bed',            p.beds||'—',                          'Beds'],
                   ['fa-bath',           p.baths||'—',                         'Baths'],
                   ['fa-ruler-combined', p.area+'m²',                          'Area'],
-                  ['fa-calendar-alt',   daysOld===0?'Today':`${daysOld}d`,    'Listed'],
-                  ['fa-eye',            (p.viewCount||0).toLocaleString(),     'Views'],
+                  ['fa-calendar-alt',   daysOld===0?t('property.today'):`${daysOld}d`,    t('detail.listedLabel')],
+                  ['fa-eye',            (p.viewCount||0).toLocaleString(),     t('detail.views')],
                 ].map(([icon,val,lbl]) => (
                   <div key={lbl} className="flex flex-col items-center py-4 text-center">
                     <i className={`fas ${icon} text-gray-300 mb-1`} style={{fontSize:14}} />
@@ -234,13 +236,13 @@ export default function PropertyDetail() {
                 {[
                   ['fa-home','Type',       p.type==='sale'?'For Sale':'For Rent'],
                   ['fa-couch','Furnished', (p.furnished||'—').charAt(0).toUpperCase()+(p.furnished||'').slice(1)],
-                  ['fa-tools','Condition', (p.condition||'—').charAt(0).toUpperCase()+(p.condition||'').slice(1)],
+                  ['fa-tools',t('detail.condition'), (p.condition||'—').charAt(0).toUpperCase()+(p.condition||'').slice(1)],
                   ['fa-layer-group','Floor',(p.floor||'—').charAt(0).toUpperCase()+(p.floor||'').slice(1)],
-                  ['fa-car','Parking',     p.parking?'Yes':'No'],
+                  ['fa-car','Parking',     p.parking?t('detail.yes'):t('detail.no')],
                   ['fa-sort-amount-up','Elevator',p.elevator?'Yes':'No'],
                   ['fa-umbrella-beach','Terrace',p.terrace?'Yes':'No'],
                   ['fa-ruler-combined','Area',p.area+' m²'],
-                  ['fa-hashtag','Reference','HESTIA-'+String(p.id).padStart(4,'0')],
+                  ['fa-hashtag',t('detail.reference'),'HESTIA-'+String(p.id).padStart(4,'0')],
                 ].map(([icon,lbl,val]) => (
                   <div key={lbl} className="flex items-center gap-2.5 p-3 bg-gray-50 rounded-xl">
                     <div className="w-7 h-7 bg-primary-soft rounded-lg flex items-center justify-center flex-shrink-0">

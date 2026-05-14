@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../hooks/useAuth'
 import AuthModal from './AuthModal'
 
 export default function Navbar() {
+  const { t, i18n } = useTranslation()
   const { user, profile, signOut } = useAuth()
   const [showAuth, setShowAuth]   = useState(false)
   const [authTab, setAuthTab]     = useState('login')
@@ -29,8 +31,11 @@ export default function Navbar() {
     ? profile.name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase()
     : (user?.email?.[0]?.toUpperCase() ?? '?')
   const displayName = profile?.name?.split(' ')[0] || user?.email?.split('@')[0] || 'Account'
-
   const textColor = scrolled ? 'text-gray-600' : 'text-white/90'
+
+  function toggleLang() {
+    i18n.changeLanguage(i18n.language === 'fr' ? 'en' : 'fr')
+  }
 
   return (
     <>
@@ -39,27 +44,40 @@ export default function Navbar() {
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between">
 
           <Link to="/" className={`font-display text-2xl font-bold flex items-center gap-2 ${scrolled ? 'text-primary' : 'text-white'}`}>
-            <i className="fas fa-home" style={{color: '#e8b931', fontSize: 18}} />
+            <i className="fas fa-home" style={{color:'#e8b931', fontSize:18}} />
             Hestia
           </Link>
 
           <div className="hidden md:flex items-center gap-6">
-            {['Properties','Cities','For Agents','About'].map(l => (
-              <button key={l}
-                className={`text-sm font-semibold hover:text-primary transition-colors ${textColor}`}
-                onClick={() => l === 'Properties' ? document.getElementById('listings')?.scrollIntoView({ behavior: 'smooth' }) : null}>
-                {l}
+            {[
+              [t('nav.properties'), () => navigate('/search')],
+              [t('nav.cities'),     () => document.getElementById('cities')?.scrollIntoView({behavior:'smooth'})],
+              [t('nav.forAgents'),  () => navigate('/agent')],
+            ].map(([label, action]) => (
+              <button key={label} onClick={action}
+                className={`text-sm font-semibold hover:text-primary transition-colors ${textColor}`}>
+                {label}
               </button>
             ))}
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Language toggle */}
+            <button onClick={toggleLang}
+              className={`flex items-center gap-1.5 text-sm font-bold px-3 py-1.5 rounded-lg transition-all border
+                ${scrolled
+                  ? 'border-gray-200 text-gray-600 hover:border-primary hover:text-primary'
+                  : 'border-white/30 text-white hover:bg-white/10'}`}>
+              <i className="fas fa-globe text-xs" />
+              {i18n.language === 'fr' ? 'FR' : 'EN'}
+            </button>
+
             {user ? (
               <div className="relative" ref={ddRef}>
                 <button onClick={() => setDdOpen(d => !d)}
                   className={`flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all
                     ${scrolled ? 'border-gray-200 hover:border-primary' : 'border-white/30 hover:border-white/60'}`}>
-                  <div className="w-7 h-7 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold">
+                  <div className="w-7 h-7 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center">
                     {initials}
                   </div>
                   <span className={`text-sm font-semibold hidden sm:block ${scrolled ? 'text-gray-700' : 'text-white'}`}>
@@ -75,22 +93,19 @@ export default function Navbar() {
                       <p className="text-xs text-gray-400">{user.email}</p>
                     </div>
                     <button onClick={() => setDdOpen(false)} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2.5">
-                      <i className="fas fa-heart text-gray-400 w-4 text-center" />Favourites
+                      <i className="fas fa-heart text-gray-400 w-4 text-center" /> Favourites
                     </button>
                     <button onClick={() => setDdOpen(false)} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2.5">
-                      <i className="fas fa-calendar-check text-gray-400 w-4 text-center" />My Viewings
-                    </button>
-                    <button onClick={() => setDdOpen(false)} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2.5">
-                      <i className="fas fa-user-cog text-gray-400 w-4 text-center" />Profile Settings
+                      <i className="fas fa-calendar-check text-gray-400 w-4 text-center" /> My Viewings
                     </button>
                     {profile?.role === 'ADMIN' && (
                       <button onClick={() => { navigate('/admin'); setDdOpen(false) }} className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2.5">
-                        <i className="fas fa-shield-alt text-gray-400 w-4 text-center" />Admin Panel
+                        <i className="fas fa-shield-alt text-gray-400 w-4 text-center" /> Admin Panel
                       </button>
                     )}
                     <div className="border-t border-gray-100 mt-1 pt-1">
                       <button onClick={() => { signOut(); setDdOpen(false) }} className="w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-red-50 flex items-center gap-2.5">
-                        <i className="fas fa-sign-out-alt w-4 text-center" />Sign Out
+                        <i className="fas fa-sign-out-alt w-4 text-center" /> {i18n.language === 'fr' ? 'Se déconnecter' : 'Sign Out'}
                       </button>
                     </div>
                   </div>
@@ -100,21 +115,22 @@ export default function Navbar() {
               <>
                 <button onClick={() => openAuth('login')}
                   className={`text-sm font-semibold px-4 py-2 rounded-lg transition-all ${scrolled ? 'text-gray-600 hover:bg-gray-100' : 'text-white/90 hover:bg-white/10'}`}>
-                  Sign In
+                  {t('nav.signIn')}
                 </button>
                 <button onClick={() => openAuth('register')}
                   className="text-sm font-semibold px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary-dark transition-all">
-                  Register
+                  {t('nav.register')}
                 </button>
               </>
             )}
-            <a href="/agent"
+
+            <Link to="/agent"
               className={`hidden md:inline-flex items-center gap-2 text-sm font-semibold px-4 py-2 rounded-lg border transition-all
                 ${scrolled
                   ? 'border-primary text-primary hover:bg-primary hover:text-white'
                   : 'border-white/40 text-white hover:bg-white hover:text-primary'}`}>
-              <i className="fas fa-user-tie text-xs" /> Agent Portal
-            </a>
+              <i className="fas fa-user-tie text-xs" /> {t('nav.agentPortal')}
+            </Link>
           </div>
         </div>
       </nav>

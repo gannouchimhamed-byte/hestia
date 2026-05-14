@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useSearchParams, useNavigate, Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import PropertyCard from '../components/PropertyCard'
 import PropertyMap from '../components/PropertyMap'
 import { properties as ALL, getDaysOld } from '../lib/data'
@@ -40,10 +41,11 @@ function sortProps(props, sort) {
 
 // ── Left sidebar ad components ──────────────────────────────────
 function NewProjectAd() {
+  const { t } = useTranslation()
   return (
     <div className="bg-gradient-to-br from-primary to-primary-dark rounded-2xl overflow-hidden shadow-sm border border-primary/20">
       <img src="https://images.unsplash.com/photo-1486325212027-8081e485255e?w=400&q=80"
-        alt="New Project" className="w-full h-36 object-cover opacity-70" />
+        alt={t('search_page.newProject')} className="w-full h-36 object-cover opacity-70" />
       <div className="p-4">
         <div className="text-xs font-bold text-accent uppercase tracking-widest mb-1">New Project</div>
         <div className="font-display text-base font-bold text-white mb-1">Les Jardins de Carthage</div>
@@ -69,6 +71,7 @@ function NewProjectAd() {
 }
 
 function FeaturedAgentAd() {
+  const { t } = useTranslation()
   return (
     <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
       <div className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">Featured Agent</div>
@@ -100,6 +103,7 @@ function FeaturedAgentAd() {
 }
 
 function MortgageAd() {
+  const { t } = useTranslation()
   const [price, setPrice] = useState(450000)
   const monthly = Math.round(price * 0.8 * (0.075/12) * Math.pow(1+0.075/12, 300) / (Math.pow(1+0.075/12, 300) - 1))
   return (
@@ -124,6 +128,7 @@ function MortgageAd() {
 
 // ── Main Search page ─────────────────────────────────────────────
 export default function Search() {
+  const { t } = useTranslation()
   const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
   const listRef  = useRef(null)
@@ -193,7 +198,7 @@ export default function Search() {
               className="flex-1 flex items-center gap-2 px-4 py-2 bg-gray-100 rounded-xl text-sm text-gray-500 hover:bg-gray-200 transition-colors text-left max-w-md">
               <i className="fas fa-search text-gray-400 text-xs" />
               <span className="truncate">
-                {filters.location || 'All Tunisia'}{filters.type ? ` · ${filters.type}` : ''}{filters.rooms ? ` · ${filters.rooms}+ beds` : ''}
+                {filters.location || t('search_page.allTunisia')}{filters.type ? ` · ${filters.type}` : ''}{filters.rooms ? ` · ${filters.rooms}+ beds` : ''}
               </span>
               <i className="fas fa-times text-gray-400 text-xs ml-auto hover:text-gray-600" onClick={e => { e.stopPropagation(); clearAll() }} />
             </button>
@@ -229,7 +234,7 @@ export default function Search() {
           <div className="flex items-center gap-2 px-4 py-2 overflow-x-auto hide-scrollbar">
             {/* Deal tab */}
             <div className="flex bg-gray-100 rounded-lg p-0.5 flex-shrink-0">
-              {[['sale','Buy'],['rent','Rent']].map(([v,l]) => (
+              {[['sale',t('search_page.buy')],['rent',t('search_page.rent')]].map(([v,l]) => (
                 <button key={v} onClick={() => updateFilter('deal', v)}
                   className={`px-3 py-1 text-xs font-bold rounded-md transition-all ${filters.deal===v?'bg-white text-primary shadow-sm':'text-gray-500'}`}>
                   {l}

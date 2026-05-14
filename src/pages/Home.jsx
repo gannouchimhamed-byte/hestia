@@ -1,4 +1,5 @@
 import { useNavigate, Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import SearchBar from '../components/SearchBar'
 import PropertyCard from '../components/PropertyCard'
 import { properties } from '../lib/data'
@@ -20,6 +21,7 @@ const NEW_PROJECTS = [
 ]
 
 export default function Home() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
 
   return (
@@ -36,13 +38,13 @@ export default function Home() {
         <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-4 pt-24 pb-8">
           <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 text-white px-4 py-1.5 rounded-full text-sm font-semibold mb-5 backdrop-blur-sm">
             <i className="fas fa-award text-accent" style={{fontSize:12}} />
-            Tunisia's No.1 Real Estate Platform
+            {t('hero.badge')}
           </div>
           <h1 className="font-display text-5xl md:text-6xl text-white text-center font-bold leading-tight mb-3">
-            Find Your <span className="text-accent">Dream Property</span>
+            {t('hero.headline')} <span className="text-accent">{t('hero.highlight')}</span>
           </h1>
           <p className="text-white/70 text-center text-lg mb-8 max-w-xl">
-            2,500+ properties across Tunisia. Buy, rent, or invest with confidence.
+            {t('hero.sub')}
           </p>
           <SearchBar navigateOnSearch />
         </div>
@@ -50,7 +52,7 @@ export default function Home() {
         {/* Stats bar */}
         <div className="relative z-10 bg-black/20 backdrop-blur-sm border-t border-white/10">
           <div className="max-w-4xl mx-auto flex justify-around py-5 px-4">
-            {[['2,500+','Properties'],['180+','Verified Agents'],['4,000+','Happy Clients'],['12','Governorates']].map(([n,l]) => (
+            {[['2,500+',t('hero.stats.properties')],['180+',t('hero.stats.agents')],['4,000+',t('hero.stats.clients')],['12',t('hero.stats.governorates')]].map(([n,l]) => (
               <div key={l} className="text-center">
                 <div className="text-2xl font-bold text-white">{n}</div>
                 <div className="text-xs text-white/60 uppercase tracking-wide mt-0.5">{l}</div>
@@ -65,11 +67,11 @@ export default function Home() {
         <div className="max-w-6xl mx-auto">
           <div className="flex items-end justify-between mb-8">
             <div>
-              <div className="text-xs font-bold text-primary uppercase tracking-widest mb-1">Hand-picked</div>
-              <h2 className="font-display text-3xl font-bold text-gray-900">Featured Properties</h2>
+              <div className="text-xs font-bold text-primary uppercase tracking-widest mb-1">{t('home.featuredTag')}</div>
+              <h2 className="font-display text-3xl font-bold text-gray-900">{t('home.featuredTitle')}</h2>
             </div>
             <Link to="/search" className="text-sm font-semibold text-primary hover:underline flex items-center gap-1.5">
-              View all listings <i className="fas fa-arrow-right text-xs" />
+              {t('home.viewAll')} <i className="fas fa-arrow-right text-xs" />
             </Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -90,11 +92,11 @@ export default function Home() {
         <div className="max-w-6xl mx-auto">
           <div className="flex items-end justify-between mb-8">
             <div>
-              <div className="text-xs font-bold text-accent uppercase tracking-widest mb-1">Off-plan & new launch</div>
-              <h2 className="font-display text-3xl font-bold text-gray-900">New Projects</h2>
+              <div className="text-xs font-bold text-accent uppercase tracking-widest mb-1">{t('home.newProjectsTag')}</div>
+              <h2 className="font-display text-3xl font-bold text-gray-900">{t('home.newProjectsTitle')}</h2>
             </div>
             <Link to="/search?type=new" className="text-sm font-semibold text-primary hover:underline flex items-center gap-1.5">
-              View all <i className="fas fa-arrow-right text-xs" />
+              {t('home.viewAll')} <i className="fas fa-arrow-right text-xs" />
             </Link>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -136,8 +138,8 @@ export default function Home() {
       <section className="py-14 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-8">
-            <div className="text-xs font-bold text-primary uppercase tracking-widest mb-1">Explore</div>
-            <h2 className="font-display text-3xl font-bold text-gray-900">Properties by City</h2>
+            <div className="text-xs font-bold text-primary uppercase tracking-widest mb-1">{t('home.citiesTag')}</div>
+            <h2 className="font-display text-3xl font-bold text-gray-900">{t('home.citiesTitle')}</h2>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
             {CITIES.map(c => (
@@ -159,15 +161,15 @@ export default function Home() {
       <section className="py-14 px-4 bg-gray-50">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-10">
-            <div className="text-xs font-bold text-primary uppercase tracking-widest mb-1">Why choose us</div>
-            <h2 className="font-display text-3xl font-bold text-gray-900">The Smarter Way to Find Property</h2>
+            <div className="text-xs font-bold text-primary uppercase tracking-widest mb-1">{t('home.whyTag')}</div>
+            <h2 className="font-display text-3xl font-bold text-gray-900">{t('home.whyTitle')}</h2>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {[
-              { icon:'fa-shield-alt',      color:'bg-primary-soft text-primary',  title:'Verified Listings',     desc:'Every property is verified by our team before going live.' },
-              { icon:'fa-map-marked-alt',  color:'bg-blue-50 text-blue-600',     title:'Interactive Map Search', desc:'Find properties by drawing your exact search zone on the map.' },
-              { icon:'fa-bolt',            color:'bg-amber-50 text-amber-600',   title:'Instant Alerts',        desc:'Get notified the moment a matching property is listed.' },
-              { icon:'fa-user-tie',        color:'bg-emerald-50 text-emerald-600',title:'Expert Agents',        desc:'180+ verified agents with proven track records across Tunisia.' },
+              { icon:'fa-shield-alt',      color:'bg-primary-soft text-primary',  title:t('home.features.verifiedTitle'),     desc:t('home.features.verifiedDesc') },
+              { icon:'fa-map-marked-alt',  color:'bg-blue-50 text-blue-600',     title:t('home.features.mapTitle'), desc:t('home.features.mapDesc') },
+              { icon:'fa-bolt',            color:'bg-amber-50 text-amber-600',   title:t('home.features.alertsTitle'),        desc:t('home.features.alertsDesc') },
+              { icon:'fa-user-tie',        color:'bg-emerald-50 text-emerald-600',title:t('home.features.agentsTitle'),        desc:t('home.features.agentsDesc') },
             ].map(f => (
               <div key={f.title} className="bg-white rounded-2xl border border-gray-100 p-5 text-center hover:shadow-md transition-shadow">
                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4 ${f.color}`}>
@@ -186,9 +188,9 @@ export default function Home() {
         <div className="max-w-6xl mx-auto flex flex-col lg:flex-row items-center gap-12">
           <div className="flex-1">
             <div className="inline-flex items-center gap-2 bg-primary-soft text-primary px-3 py-1.5 rounded-full text-sm font-semibold mb-4">
-              <i className="fas fa-user-tie text-xs" /> For Real Estate Professionals
+              <i className="fas fa-user-tie text-xs" /> {t('home.agentTag')}
             </div>
-            <h2 className="font-display text-3xl font-bold text-gray-900 mb-4">Powerful Tools for Agents</h2>
+            <h2 className="font-display text-3xl font-bold text-gray-900 mb-4">{t('home.agentTitle')}</h2>
             <p className="text-gray-500 mb-6 leading-relaxed">
               Manage listings, track leads, and close deals faster with Hestia's dedicated agent dashboard — built specifically for Tunisia's real estate market.
             </p>
@@ -208,7 +210,7 @@ export default function Home() {
               ))}
             </div>
             <Link to="/agent" className="btn-primary inline-flex gap-2">
-              Access Agent Portal <i className="fas fa-arrow-right text-xs" />
+              {t('nav.agentPortal')} <i className="fas fa-arrow-right text-xs" />
             </Link>
           </div>
 
@@ -255,8 +257,8 @@ export default function Home() {
       <section className="py-14 px-4 bg-gray-50">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-10">
-            <div className="text-xs font-bold text-primary uppercase tracking-widest mb-1">Trusted by thousands</div>
-            <h2 className="font-display text-3xl font-bold text-gray-900">What Our Clients Say</h2>
+            <div className="text-xs font-bold text-primary uppercase tracking-widest mb-1">{t('home.testimonialsTag')}</div>
+            <h2 className="font-display text-3xl font-bold text-gray-900">{t('home.testimonialsTitle')}</h2>
           </div>
           <div className="grid md:grid-cols-3 gap-6">
             {[
@@ -282,14 +284,14 @@ export default function Home() {
       {/* ── CTA ─────────────────────────────────────────────────── */}
       <section className="py-14 px-4 bg-primary">
         <div className="max-w-2xl mx-auto text-center">
-          <h2 className="font-display text-3xl font-bold text-white mb-3">Ready to Find Your Home?</h2>
-          <p className="text-white/70 mb-8">Join thousands of satisfied clients on Tunisia's most trusted real estate platform.</p>
+          <h2 className="font-display text-3xl font-bold text-white mb-3">{t('home.ctaTitle')}</h2>
+          <p className="text-white/70 mb-8">{t('home.ctaSub')}</p>
           <div className="flex gap-4 justify-center flex-wrap">
             <Link to="/search" className="bg-accent hover:bg-amber-400 text-gray-900 font-bold px-8 py-3 rounded-xl transition-all inline-flex items-center gap-2">
-              <i className="fas fa-search" /> Browse Properties
+              <i className="fas fa-search" /> {t('home.ctaBrowse')}
             </Link>
             <Link to="/agent" className="bg-white/15 hover:bg-white/25 text-white font-bold px-8 py-3 rounded-xl transition-all border border-white/20 inline-flex items-center gap-2">
-              <i className="fas fa-user-tie" /> Agent Registration
+              <i className="fas fa-user-tie" /> {t('home.ctaAgent')}
             </Link>
           </div>
         </div>
@@ -312,9 +314,9 @@ export default function Home() {
             </div>
           </div>
           {[
-            {title:'Properties',links:['For Sale','For Rent','New Projects','Commercial','Land']},
-            {title:'Company',   links:['About Us','Careers','Blog','Press','Contact']},
-            {title:'Support',   links:['Help Center','Agent Support','Privacy Policy','Terms','Sitemap']},
+            {title:t('footer.properties'),links:[t('footer.forSale'),t('footer.forRent'),t('footer.newProjects'),t('footer.commercial'),t('footer.land')]},
+            {title:t('footer.company'),   links:[t('footer.aboutUs'),t('footer.careers'),t('footer.blog'),t('footer.press'),t('footer.contact')]},
+            {title:t('footer.support'),   links:[t('footer.helpCenter'),t('footer.agentSupport'),t('footer.privacy'),t('footer.terms'),t('footer.sitemap')]},
           ].map(col => (
             <div key={col.title}>
               <h4 className="font-bold mb-3 text-xs uppercase tracking-widest text-gray-400">{col.title}</h4>
@@ -327,7 +329,7 @@ export default function Home() {
         <div className="border-t border-gray-800 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-gray-500 text-sm">© 2026 Hestia Real Estate. All rights reserved.</p>
           <div className="flex gap-4">
-            {['Privacy','Terms','Cookies'].map(l => <a key={l} href="#" className="text-gray-500 text-sm hover:text-white">{l}</a>)}
+            {[t('footer.privacyShort'),'Terms',t('footer.cookiesShort')].map(l => <a key={l} href="#" className="text-gray-500 text-sm hover:text-white">{l}</a>)}
           </div>
         </div>
       </footer>

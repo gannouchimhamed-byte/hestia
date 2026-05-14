@@ -1,20 +1,22 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { getDaysOld, getFreshnessTier } from '../lib/data'
 
 const FRESHNESS_BADGE = {
-  new:     { label: 'New',           cls: 'bg-blue-500 text-white' },
-  reduced: { label: 'Price Reduced', cls: 'bg-emerald-500 text-white' },
-  hot:     { label: 'Popular',       cls: 'bg-red-500 text-white' },
-  stale:   { label: '45+ days',      cls: 'bg-gray-400 text-white' },
+  new:     { label: t('property.new'),           cls: 'bg-blue-500 text-white' },
+  reduced: { label: t('property.priceReduced'), cls: 'bg-emerald-500 text-white' },
+  hot:     { label: t('property.popular'),       cls: 'bg-red-500 text-white' },
+  stale:   { label: t('property.daysOnMarket'),      cls: 'bg-gray-400 text-white' },
 }
 
 export default function PropertyCard({ p, view = 'grid', onHover, highlighted }) {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [fav, setFav] = useState(false)
   const tier    = getFreshnessTier(p)
   const days    = getDaysOld(p.listedAt)
-  const ageLabel = days === 0 ? 'Today' : days === 1 ? '1 day ago' : `${days} days ago`
+  const ageLabel = days === 0 ? t('property.today') : days === 1 ? t('property.dayAgo', {count:1}) : `${days > 1 ? t('property.daysAgo', {count:days}) : t('property.dayAgo', {count:days})}`
   const isGrid  = view === 'grid'
 
   return (
@@ -38,7 +40,7 @@ export default function PropertyCard({ p, view = 'grid', onHover, highlighted })
         {/* Type badge */}
         <div className="absolute top-3 left-3 flex gap-1.5">
           <span className={`px-2.5 py-1 rounded-md text-xs font-bold tracking-wide ${p.type === 'sale' ? 'bg-primary text-white' : 'bg-accent text-gray-900'}`}>
-            {p.type === 'sale' ? 'For Sale' : 'For Rent'}
+            {p.type === 'sale' ? t('property.forSale') : t('property.forRent')}
           </span>
           {p.featured && (
             <span className="px-2.5 py-1 rounded-md text-xs font-bold bg-amber-500 text-white">Featured</span>

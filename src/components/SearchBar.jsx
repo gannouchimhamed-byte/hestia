@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { CITIES } from '../lib/data'
 
 const SHORTCUTS = [
@@ -7,10 +8,11 @@ const SHORTCUTS = [
   { icon: 'fa-home',      label: 'Villas',     type: 'villa'     },
   { icon: 'fa-briefcase', label: 'Offices',    type: 'office'    },
   { icon: 'fa-mountain',  label: 'Land',       type: 'land'      },
-  { icon: 'fa-store',     label: 'Commercial', type: 'commercial'},
+  { icon: 'fa-store',     label: t('search.commercial'), type: 'commercial'},
 ]
 
 export default function SearchBar({ onSearch, navigateOnSearch = false }) {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const [deal, setDeal]         = useState('sale')
   const [location, setLoc]      = useState('')
@@ -57,7 +59,7 @@ export default function SearchBar({ onSearch, navigateOnSearch = false }) {
     <div className="w-full max-w-3xl">
       {/* Deal tabs */}
       <div className="flex rounded-t-2xl overflow-hidden border border-white/20">
-        {[['sale','Buy'],['rent','Rent'],['commercial','Commercial']].map(([v,l]) => (
+        {[['sale',t('search.buy')],['rent',t('search.rent')],['commercial','Commercial']].map(([v,l]) => (
           <button key={v} onClick={() => setDeal(v)}
             className={`flex-1 py-3 text-sm font-bold transition-all ${
               deal === v ? 'bg-white text-primary' : 'bg-white/10 text-white/80 hover:bg-white/20 backdrop-blur-sm'
@@ -78,7 +80,7 @@ export default function SearchBar({ onSearch, navigateOnSearch = false }) {
                 onFocus={() => setShowSugg(true)}
                 onBlur={() => setTimeout(() => setShowSugg(false), 150)}
                 onKeyDown={e => e.key === 'Enter' && search()}
-                placeholder="City, neighbourhood or address..."
+                placeholder={t('search.placeholder')}
                 className="flex-1 text-sm font-medium outline-none placeholder-gray-400 text-gray-800 bg-transparent" />
               {location && (
                 <button onClick={() => setLoc('')} className="text-gray-300 hover:text-gray-400 flex-shrink-0">
@@ -141,7 +143,7 @@ export default function SearchBar({ onSearch, navigateOnSearch = false }) {
           <button onClick={() => setShowAdv(a => !a)}
             className="text-xs font-semibold text-primary flex items-center gap-1.5 hover:underline">
             <i className="fas fa-sliders-h text-xs" />
-            {showAdv ? 'Hide filters' : 'More filters'}
+            {showAdv ? t('search.hideFilters') : t('search.moreFilters')}
           </button>
           {(type || rooms || price || adv.condition) && (
             <button onClick={() => { setType(''); setRooms(''); setPrice(''); setAdv({}) }}
