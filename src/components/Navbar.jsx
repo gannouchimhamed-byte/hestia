@@ -56,7 +56,7 @@ export default function Navbar() {
     { label: t('search.buy'),        path: '/search?deal=sale',       icon: 'fa-home' },
     { label: t('search.rent'),       path: '/search?deal=rent',       icon: 'fa-key' },
     { label: t('home.newProjectsTitle'), path: '/search?type=new',    icon: 'fa-building' },
-    { label: t('nav.forAgents'),     path: '/agent',                  icon: 'fa-user-tie' },
+    { label: t('nav.forAgents'),     path: '/agent',                  icon: 'fa-user-tie', external: true },
   ]
 
   return (
@@ -74,12 +74,16 @@ export default function Navbar() {
           {/* Nav links — desktop */}
           <div className="hidden md:flex items-center gap-1">
             {NAV_LINKS.map(l => (
-              <button key={l.path}
-                onClick={() => navigate(l.path)}
-                className={`px-3 py-2 rounded-lg text-sm font-semibold ${text} ${hover}
-                  hover:bg-primary/10 transition-all`}>
-                {l.label}
-              </button>
+              l.external
+                ? <a key={l.path} href={l.path}
+                    className={`px-3 py-2 rounded-lg text-sm font-semibold ${text} ${hover} hover:bg-primary/10 transition-all`}>
+                    {l.label}
+                  </a>
+                : <button key={l.path}
+                    onClick={() => navigate(l.path)}
+                    className={`px-3 py-2 rounded-lg text-sm font-semibold ${text} ${hover} hover:bg-primary/10 transition-all`}>
+                    {l.label}
+                  </button>
             ))}
           </div>
 
@@ -101,7 +105,7 @@ export default function Navbar() {
 
             {/* List property — primary CTA */}
             <button
-              onClick={() => user ? navigate('/agent/listings') : openAuth('register')}
+              onClick={() => { if (!user) { openAuth('register') } else { window.location.href = '/agent' } }}
               className={`hidden sm:flex items-center gap-2 text-sm font-bold px-4 py-2 rounded-xl transition-all
                 ${transparent
                   ? 'bg-white/15 text-white border border-white/30 hover:bg-white hover:text-primary backdrop-blur-sm'
@@ -154,11 +158,11 @@ export default function Navbar() {
                       )}
                     </div>
                     <div className="border-t border-gray-100 pt-1">
-                      <button onClick={() => { navigate('/agent'); setDdOpen(false) }}
+                      <a href="/agent"
                         className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-primary font-semibold hover:bg-primary-soft transition-colors">
                         <i className="fas fa-user-tie w-4 text-center" style={{fontSize:13}} />
                         Agent Dashboard
-                      </button>
+                      </a>
                       <button onClick={() => { signOut(); setDdOpen(false) }}
                         className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition-colors">
                         <i className="fas fa-sign-out-alt w-4 text-center" style={{fontSize:13}} />
@@ -225,21 +229,27 @@ export default function Navbar() {
           <div className="md:hidden bg-white border-t border-gray-100 shadow-xl">
             <div className="px-4 py-3 space-y-1">
               {NAV_LINKS.map(l => (
-                <button key={l.path}
-                  onClick={() => navigate(l.path)}
-                  className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold text-gray-700 hover:bg-primary-soft hover:text-primary transition-all">
-                  <i className={`fas ${l.icon} text-primary w-4 text-center`} style={{fontSize:13}} />
-                  {l.label}
-                </button>
+                l.external
+                  ? <a key={l.path} href={l.path}
+                      className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold text-gray-700 hover:bg-primary-soft hover:text-primary transition-all">
+                      <i className={`fas ${l.icon} text-primary w-4 text-center`} style={{fontSize:13}} />
+                      {l.label}
+                    </a>
+                  : <button key={l.path}
+                      onClick={() => navigate(l.path)}
+                      className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold text-gray-700 hover:bg-primary-soft hover:text-primary transition-all">
+                      <i className={`fas ${l.icon} text-primary w-4 text-center`} style={{fontSize:13}} />
+                      {l.label}
+                    </button>
               ))}
               <div className="border-t border-gray-100 pt-2 mt-2">
                 {user ? (
                   <>
-                    <button onClick={() => navigate('/agent')}
+                    <a href="/agent"
                       className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold text-primary hover:bg-primary-soft transition-all">
                       <i className="fas fa-user-tie w-4 text-center" style={{fontSize:13}} />
                       Agent Dashboard
-                    </button>
+                    </a>
                     <button onClick={signOut}
                       className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold text-red-500 hover:bg-red-50 transition-all">
                       <i className="fas fa-sign-out-alt w-4 text-center" style={{fontSize:13}} />
