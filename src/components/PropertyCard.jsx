@@ -3,21 +3,27 @@ import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { getDaysOld, getFreshnessTier } from '../lib/data'
 
-const FRESHNESS_BADGE = {
-  new:     { label: t('property.new'),           cls: 'bg-blue-500 text-white' },
-  reduced: { label: t('property.priceReduced'), cls: 'bg-emerald-500 text-white' },
-  hot:     { label: t('property.popular'),       cls: 'bg-red-500 text-white' },
-  stale:   { label: t('property.daysOnMarket'),      cls: 'bg-gray-400 text-white' },
-}
-
 export default function PropertyCard({ p, view = 'grid', onHover, highlighted }) {
-  const { t } = useTranslation()
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [fav, setFav] = useState(false)
   const tier    = getFreshnessTier(p)
   const days    = getDaysOld(p.listedAt)
-  const ageLabel = days === 0 ? t('property.today') : days === 1 ? t('property.dayAgo', {count:1}) : `${days > 1 ? t('property.daysAgo', {count:days}) : t('property.dayAgo', {count:days})}`
-  const isGrid  = view === 'grid'
+  const ageLabel = days === 0
+    ? t('property.today')
+    : days === 1
+      ? t('property.dayAgo', { count: 1 })
+      : t('property.daysAgo', { count: days })
+
+  // Freshness badge defined inside component so t() is available
+  const FRESHNESS_BADGE = {
+    new:     { label: t('property.new'),           cls: 'bg-blue-500 text-white' },
+    reduced: { label: t('property.priceReduced'),  cls: 'bg-emerald-500 text-white' },
+    hot:     { label: t('property.popular'),       cls: 'bg-red-500 text-white' },
+    stale:   { label: t('property.daysOnMarket'),  cls: 'bg-gray-400 text-white' },
+  }
+
+  const isGrid = view === 'grid'
 
   return (
     <div
@@ -36,24 +42,21 @@ export default function PropertyCard({ p, view = 'grid', onHover, highlighted })
           src={p.images[0]} alt={p.title}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
         />
-
         {/* Type badge */}
         <div className="absolute top-3 left-3 flex gap-1.5">
           <span className={`px-2.5 py-1 rounded-md text-xs font-bold tracking-wide ${p.type === 'sale' ? 'bg-primary text-white' : 'bg-accent text-gray-900'}`}>
             {p.type === 'sale' ? t('property.forSale') : t('property.forRent')}
           </span>
           {p.featured && (
-            <span className="px-2.5 py-1 rounded-md text-xs font-bold bg-amber-500 text-white">Featured</span>
+            <span className="px-2.5 py-1 rounded-md text-xs font-bold bg-amber-500 text-white">{t('property.featured')}</span>
           )}
         </div>
-
-        {/* Freshness */}
+        {/* Freshness badge */}
         {tier !== 'fresh' && FRESHNESS_BADGE[tier] && (
           <span className={`absolute bottom-3 left-3 px-2.5 py-1 rounded-md text-xs font-bold ${FRESHNESS_BADGE[tier].cls}`}>
             {FRESHNESS_BADGE[tier].label}
           </span>
         )}
-
         {/* Actions */}
         <div className="absolute top-3 right-3 flex flex-col gap-1.5">
           <button
@@ -65,7 +68,7 @@ export default function PropertyCard({ p, view = 'grid', onHover, highlighted })
           <button
             onClick={e => {
               e.stopPropagation()
-              const clean = p.agent.phone.replace(/\D/g,'')
+              const clean = p.agent.phone.replace(/\D/g, '')
               window.open(`https://wa.me/${clean}?text=${encodeURIComponent(`Hi, interested in: ${p.title} — ${p.price}`)}`, '_blank')
             }}
             className="w-8 h-8 rounded-full bg-[#25d366] text-white flex items-center justify-center shadow-md hover:bg-[#128c7e] transition-all"
@@ -83,26 +86,23 @@ export default function PropertyCard({ p, view = 'grid', onHover, highlighted })
             <span className="text-sm text-gray-400 line-through">{p.originalPrice.toLocaleString()} TND</span>
           )}
         </div>
-
         <h3 className="font-semibold text-gray-900 mb-1 line-clamp-1 group-hover:text-primary transition-colors">
           {p.title}
         </h3>
-
         <p className="text-sm text-gray-400 flex items-center gap-1 mb-3">
           <i className="fas fa-map-marker-alt text-primary" style={{fontSize:'10px'}} />
           {p.location}
         </p>
-
         {/* Features */}
         <div className="flex items-center gap-4 text-sm text-gray-500 mb-3 pt-3 border-t border-gray-100">
           {p.beds > 0 && (
             <span className="flex items-center gap-1.5">
-              <i className="fas fa-bed text-gray-300 text-xs" />{p.beds} Beds
+              <i className="fas fa-bed text-gray-300 text-xs" />{p.beds} {t('property.beds')}
             </span>
           )}
           {p.baths > 0 && (
             <span className="flex items-center gap-1.5">
-              <i className="fas fa-bath text-gray-300 text-xs" />{p.baths} Baths
+              <i className="fas fa-bath text-gray-300 text-xs" />{p.baths} {t('property.baths')}
             </span>
           )}
           <span className="flex items-center gap-1.5">
@@ -110,7 +110,6 @@ export default function PropertyCard({ p, view = 'grid', onHover, highlighted })
           </span>
           <span className="ml-auto text-xs text-gray-300">{ageLabel}</span>
         </div>
-
         {/* Agent */}
         <div className="flex items-center gap-2 pt-3 border-t border-gray-100 mt-auto">
           <img src={p.agent.image} alt={p.agent.name} className="w-7 h-7 rounded-full object-cover flex-shrink-0" />

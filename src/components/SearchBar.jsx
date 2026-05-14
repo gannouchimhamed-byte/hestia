@@ -4,11 +4,11 @@ import { useTranslation } from 'react-i18next'
 import { CITIES } from '../lib/data'
 
 const SHORTCUTS = [
-  { icon: 'fa-building',  label: 'Apartments', type: 'apartment' },
-  { icon: 'fa-home',      label: 'Villas',     type: 'villa'     },
-  { icon: 'fa-briefcase', label: 'Offices',    type: 'office'    },
-  { icon: 'fa-mountain',  label: 'Land',       type: 'land'      },
-  { icon: 'fa-store',     label: t('search.commercial'), type: 'commercial'},
+  { icon: 'fa-building',  labelKey: 'search.shortcuts.apartments', type: 'apartment' },
+  { icon: 'fa-home',      labelKey: 'search.shortcuts.villas',     type: 'villa'     },
+  { icon: 'fa-briefcase', labelKey: 'search.shortcuts.offices',    type: 'office'    },
+  { icon: 'fa-mountain',  labelKey: 'search.shortcuts.land',       type: 'land'      },
+  { icon: 'fa-store',     labelKey: 'search.shortcuts.commercial', type: 'commercial'},
 ]
 
 export default function SearchBar({ onSearch, navigateOnSearch = false }) {
@@ -181,7 +181,7 @@ export default function SearchBar({ onSearch, navigateOnSearch = false }) {
               ${type === s.type
                 ? 'bg-white text-primary border-white shadow-md'
                 : 'bg-white/15 text-white border-white/30 hover:bg-white hover:text-primary hover:border-white backdrop-blur-sm'}`}>
-            <i className={`fas ${s.icon} text-xs`} />{s.label}
+            <i className={`fas ${s.icon} text-xs`} />{t(s.labelKey)}
           </button>
         ))}
       </div>
