@@ -552,8 +552,8 @@ export default function Home() {
         <div className="border-t border-gray-800 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-gray-500 text-sm">{t('footer.copyright')}</p>
           <div className="flex gap-4">
-            {[t('footer.privacyShort'),t('footer.termsShort'),t('footer.cookiesShort')].map(l => (
-              <a key={l} href="#" className="text-gray-500 text-sm hover:text-white transition-colors">{l}</a>
+            {[[t('footer.privacyShort'),'/privacy'],[t('footer.termsShort'),'/terms'],[t('footer.cookiesShort'),'#']].map(([l,href]) => (
+              <a key={l} href={href} className="text-gray-500 text-sm hover:text-white transition-colors">{l}</a>
             ))}
           </div>
         </div>

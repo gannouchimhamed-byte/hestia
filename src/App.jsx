@@ -20,6 +20,8 @@ import { AdminAgents, AdminFlags, AdminHealth, AdminActivity, AdminBroadcast, Ad
 import { FavoritesProvider } from './hooks/FavoritesContext'
 import Account from './pages/Account'
 import NotFound from './pages/NotFound'
+import Privacy from './pages/Privacy'
+import Terms from './pages/Terms'
 
 export default function App() {
   return (
@@ -56,6 +58,8 @@ export default function App() {
               <Route path="health"   element={<AdminHealth />} />
               <Route path="broadcast" element={<AdminBroadcast />} />
             </Route>
+            <Route path="/privacy" element={<><Navbar /><Privacy /></>} />
+            <Route path="/terms"   element={<><Navbar /><Terms /></>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           </FavoritesProvider>
