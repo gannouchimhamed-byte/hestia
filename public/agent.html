@@ -950,10 +950,10 @@
                     <div class="card">
                         <div class="card-header">
                             <h3><i class="fas fa-folder-open" style="color: var(--primary);"></i> Documents</h3>
-                            <button class="btn btn-sm btn-primary" onclick="document.getElementById('docFileInput') ? document.getElementById('docFileInput').click() : showToast('Open a lead first to upload documents', 'info')"><i class="fas fa-upload"></i> Upload</button>
+                            <button class="btn btn-sm btn-primary" onclick="document.getElementById('docFileInput') ? document.getElementById('docFileInput').click() : (switchPage('leads'), showToast('Select a lead first, then click Document Manager', 'info'))"><i class="fas fa-upload"></i> Upload</button>
                         </div>
                         <div class="card-body">
-                            <div class="upload-zone" onclick="document.getElementById('docFileInput') ? document.getElementById('docFileInput').click() : showToast('Open a lead first to upload documents', 'info')">
+                            <div class="upload-zone" onclick="document.getElementById('docFileInput') ? document.getElementById('docFileInput').click() : (switchPage('leads'), showToast('Select a lead first, then click Document Manager', 'info'))">
                                 <i class="fas fa-cloud-upload-alt"></i>
                                 <p><strong>Click to upload</strong> or drag and drop files here</p>
                                 <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">PDF, DOC, JPG up to 20MB</p>
@@ -1221,7 +1221,7 @@
                     <div class="card" style="margin-bottom:1.5rem;">
                         <div class="card-header">
                             <h3><i class="fas fa-paper-plane" style="color:var(--primary);"></i> Automated Follow-up Sequences</h3>
-                            <button class="btn btn-sm btn-primary" onclick="showToast('Sequence builder will be available in the next update', 'info')"><i class="fas fa-plus"></i> New Sequence</button>
+                            <button class="btn btn-sm btn-primary" onclick="openModal('whatsappTemplatesModal')"><i class="fas fa-plus"></i> New Sequence</button>
                         </div>
                         <div class="card-body">
                             <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:1.5rem;">Automatically email or WhatsApp leads at the right time. Activate a sequence on any lead from the CRM.</p>
@@ -1804,10 +1804,10 @@
         const MONTHS_LONG = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
         async function loadCalendarFromDB() {
-            if (!sb || !currentUser) return;
+            if (!sb || !agentUser) return;
             const { data } = await sb.from('viewings')
                 .select('*')
-                .eq('user_id', currentUser.id)
+                .eq('user_id', agentUser.id)
                 .order('viewing_date', { ascending: true });
             if (data && data.length) {
                 calendarEvents = data.map(v => ({
@@ -1836,7 +1836,29 @@
 
         // ==================== CORE FUNCTIONS ====================
 
-        function init() {
+        async function loadCommissionsFromDB() {
+            if (!agentUser) return;
+            const { data } = await sb.from('commissions')
+                .select('*')
+                .eq('agent_id', agentUser.id)
+                .order('deal_date', { ascending: false });
+            if (data && data.length) {
+                commissions = data.map(r => ({
+                    id:        r.id,
+                    property:  r.property_title || 'Unknown',
+                    client:    r.client_name    || '—',
+                    salePrice: r.sale_price     || 0,
+                    rate:      r.commission_rate || 2.5,
+                    amount:    r.commission_amount || 0,
+                    type:      r.deal_type      || 'sale',
+                    status:    r.status         || 'pending',
+                    date:      r.deal_date      || new Date().toISOString().split('T')[0],
+                }));
+                renderCommissionPage();
+            }
+        }
+
+        async function init() {
             renderHotLeads();
             renderTodaySchedule();
             initCharts();
@@ -1857,6 +1879,13 @@
             document.getElementById('newTaskDate').value = new Date().toISOString().split('T')[0];
             const commDate = document.getElementById('newCommDate');
             if (commDate) commDate.value = new Date().toISOString().split('T')[0];
+
+            // Load real data from Supabase
+            await loadRealLeads();
+            await loadRealProperties();
+            await loadRealTasks();
+            await loadCommissionsFromDB();
+            loadCalendarFromDB();
         }
 
         function switchPage(page) {
@@ -2144,7 +2173,62 @@
         function editLead(leadId) {
                 const lead = leads.find(l => String(l.id) === String(leadId));
                 if (!lead) return;
-                openLeadDetail(leadId);
+                // Pre-fill the add lead modal for editing
+                document.getElementById('newLeadFirstName').value = lead.firstName || '';
+                document.getElementById('newLeadLastName').value  = lead.lastName  || '';
+                document.getElementById('newLeadPhone').value     = lead.phone     || '';
+                document.getElementById('newLeadEmail').value     = lead.email     || '';
+                const propEl = document.getElementById('newLeadProperty');
+                if (propEl) propEl.value = lead.property || '';
+                const statusEl = document.getElementById('newLeadStatus');
+                if (statusEl) statusEl.value = lead.status || 'new';
+                const priEl = document.getElementById('newLeadPriority');
+                if (priEl) priEl.value = lead.priority || 'medium';
+                const srcEl = document.getElementById('newLeadSource');
+                if (srcEl) srcEl.value = lead.source || 'Website';
+                const notesEl = document.getElementById('newLeadNotes');
+                if (notesEl) notesEl.value = lead.notes || '';
+                // Change save button to update mode
+                const saveBtn = document.querySelector('#addLeadModal .btn-primary');
+                if (saveBtn) {
+                    saveBtn.innerHTML = '<i class="fas fa-save"></i> Update Lead';
+                    saveBtn.onclick = () => updateLeadFull(leadId);
+                }
+                openModal('addLeadModal');
+            }
+
+            async function updateLeadFull(leadId) {
+                const firstName = document.getElementById('newLeadFirstName').value.trim();
+                const lastName  = document.getElementById('newLeadLastName').value.trim();
+                const phone     = document.getElementById('newLeadPhone').value.trim();
+                if (!firstName || !phone) { showToast('First name and phone required', 'error'); return; }
+                const payload = {
+                    first_name:   firstName,
+                    last_name:    lastName,
+                    phone,
+                    email:        document.getElementById('newLeadEmail').value.trim(),
+                    property:     document.getElementById('newLeadProperty')?.value?.trim() || '',
+                    status:       document.getElementById('newLeadStatus')?.value || 'new',
+                    priority:     document.getElementById('newLeadPriority')?.value || 'medium',
+                    source:       document.getElementById('newLeadSource')?.value || 'Website',
+                    notes:        document.getElementById('newLeadNotes')?.value?.trim() || '',
+                    updated_at:   new Date().toISOString(),
+                };
+                const lead = leads.find(l => String(l.id) === String(leadId));
+                if (!lead) return;
+                // Update local
+                Object.assign(lead, { firstName, lastName, phone, email: payload.email, property: payload.property, status: payload.status, priority: payload.priority, source: payload.source, notes: payload.notes });
+                // Update Supabase if UUID
+                if (typeof leadId === 'string' && leadId.includes('-')) {
+                    const { error } = await sb.from('leads').update(payload).eq('id', leadId);
+                    if (error) { showToast('Update failed: ' + error.message, 'error'); return; }
+                }
+                showToast('Lead updated!', 'success');
+                closeModal('addLeadModal');
+                // Restore save button
+                const saveBtn = document.querySelector('#addLeadModal .btn-primary');
+                if (saveBtn) { saveBtn.innerHTML = '<i class="fas fa-user-plus"></i> Add Lead'; saveBtn.onclick = addNewLead; }
+                renderLeadsTable(); renderHotLeads(); renderPipeline();
             }
 
         function exportLeads() {
@@ -2771,11 +2855,11 @@ async function addNewProperty() {
             `).join('');
         }
 
-        async function toggleTask(taskId) {
+        async async function toggleTask(taskId) {
             const task = tasks.find(t => String(t.id) === String(taskId));
             if (!task) return;
             task.completed = !task.completed;
-            if (typeof taskId === 'string' && taskId.includes('-')) {
+            if (agentUser && typeof taskId === 'string' && taskId.includes('-')) {
                 await sb.from('agent_tasks').update({ completed: task.completed }).eq('id', taskId);
             }
             renderTasks();
@@ -2805,28 +2889,37 @@ async function addNewProperty() {
                 leads.map(l => `<option value="${l.id}">${l.firstName} ${l.lastName}</option>`).join('');
         }
 
-        function addNewTask() {
-            const desc = document.getElementById('newTaskDesc').value;
-            const due = document.getElementById('newTaskDate').value;
+        async function addNewTask() {
+            const desc = document.getElementById('newTaskDesc').value.trim();
+            const due  = document.getElementById('newTaskDate').value;
+            if (!desc || !due) { showToast('Please fill in all fields', 'error'); return; }
 
-            if (!desc || !due) {
-                showToast('Please fill in all fields', 'error');
-                return;
+            const priority = document.getElementById('newTaskPriority').value;
+            const leadId   = document.getElementById('newTaskLead').value || null;
+
+            const localTask = {
+                id: 'local-' + Date.now(),
+                text: desc, due, priority, completed: false, leadId
+            };
+
+            // Save to Supabase if signed in
+            if (agentUser) {
+                const { data, error } = await sb.from('agent_tasks').insert({
+                    agent_id:   agentUser.id,
+                    text:       desc,
+                    due_date:   due,
+                    priority,
+                    completed:  false,
+                    lead_id:    leadId || null,
+                    created_at: new Date().toISOString(),
+                }).select().single();
+                if (!error && data) localTask.id = data.id;
             }
 
-            tasks.push({
-                id: Math.max(...tasks.map(t => t.id)) + 1,
-                text: desc,
-                due,
-                priority: document.getElementById('newTaskPriority').value,
-                completed: false,
-                leadId: document.getElementById('newTaskLead').value || null
-            });
-
+            tasks.push(localTask);
             showToast('Task added!', 'success');
             closeModal('addTaskModal');
             renderTasks();
-
             document.getElementById('newTaskDesc').value = '';
             document.getElementById('newTaskDate').value = new Date().toISOString().split('T')[0];
         }
@@ -3012,19 +3105,20 @@ async function addNewProperty() {
 
         async function saveNotifications() {
                 if (!agentUser) { showToast('Not signed in', 'error'); return; }
-                const update = {
-                    notification_email: document.getElementById('notifEmail') ? document.getElementById('notifEmail').checked : true,
-                    notification_sms:   document.getElementById('notifSms')   ? document.getElementById('notifSms').checked   : false,
-                    notification_push:  document.getElementById('notifPush')  ? document.getElementById('notifPush').checked  : true,
+                const prefs = {
+                    new_lead:  document.getElementById('notifNewLead')  ? document.getElementById('notifNewLead').checked  : true,
+                    message:   document.getElementById('notifMessage')   ? document.getElementById('notifMessage').checked   : true,
+                    email:     document.getElementById('notifEmail')     ? document.getElementById('notifEmail').checked     : true,
+                    task:      document.getElementById('notifTask')      ? document.getElementById('notifTask').checked      : true,
                 };
-                const { error } = await sb.from('profiles').update(update).eq('id', agentUser.id);
+                const { error } = await sb.from('profiles').update({ notifications: prefs, updated_at: new Date().toISOString() }).eq('id', agentUser.id);
                 if (error) { showToast('Save failed: ' + error.message, 'error'); return; }
                 showToast('Notification settings saved!', 'success');
             }
 
         async function saveWhatsAppSettings() {
                 if (!agentUser) return;
-                const numEl = document.getElementById('waPhoneNumber');
+                const numEl = document.getElementById('whatsappPhone');
                 const update = {};
                 if (numEl && numEl.value.trim()) update.whatsapp_number = numEl.value.trim();
                 if (Object.keys(update).length) {
@@ -3585,17 +3679,18 @@ async function addNewProperty() {
         async 
         async function loadRealTasks() {
             if (!agentUser) return;
-            const { data } = await sb.from('agent_tasks').select('*').eq('agent_id', agentUser.id).order('created_at', { ascending: false });
+            const { data } = await sb.from('agent_tasks').select('*').eq('agent_id', agentUser.id).order('due_date', { ascending: true });
             if (!data?.length) return;
             tasks = data.map(t => ({
                 id:        t.id,
-                title:     t.title,
-                dueDate:   t.due_date,
+                text:      t.text || t.title || '',
+                due:       t.due_date,
                 priority:  t.priority || 'medium',
                 leadId:    t.lead_id,
-                completed: t.completed,
+                completed: t.completed || false,
             }));
             renderTasks();
+            populateTaskLeadSelect();
         }
         
         async function loadRealLeads() {
