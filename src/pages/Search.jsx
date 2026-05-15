@@ -5,7 +5,8 @@ import { sb } from '../lib/supabase'
 import { useAuth } from '../hooks/useAuth'
 import PropertyCard from '../components/PropertyCard'
 import PropertyMap from '../components/PropertyMap'
-import { properties as ALL, getDaysOld } from '../lib/data'
+import { getDaysOld } from '../lib/data'
+import { useProperties } from '../lib/useProperties'
 
 function filterProps(props, f) {
   return props.filter(p => {
@@ -105,6 +106,7 @@ export default function Search() {
   const navigate = useNavigate()
   const listRef  = useRef(null)
 
+  const { properties: ALL } = useProperties()
   const [view, setView]               = useState('list')
   const [sort, setSort]               = useState('relevance')
   const [hoveredId, setHoveredId]     = useState(null)

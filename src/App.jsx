@@ -13,6 +13,7 @@ import AgentListings from './pages/Agent/Listings'
 import AgentCalendar from './pages/Agent/Calendar'
 import AgentCommission from './pages/Agent/Commission'
 import AgentMessages from './pages/Agent/Messages'
+import AgentInquiries from './pages/Agent/Inquiries'
 import AdminDashboard from './pages/Admin/Dashboard'
 import AdminListings from './pages/Admin/Listings'
 import { AdminAgents, AdminFlags, AdminHealth, AdminActivity, AdminBroadcast, AdminUsers } from './pages/Admin/Pages'
@@ -36,6 +37,7 @@ export default function App() {
             <Route path="/agent" element={<AgentLayout />}>
               <Route index element={<AgentDashboard />} />
               <Route path="leads"      element={<AgentLeads />} />
+              <Route path="inquiries"  element={<AgentInquiries />} />
               <Route path="messages"   element={<AgentMessages />} />
               <Route path="calendar"   element={<AgentCalendar />} />
               <Route path="listings"   element={<AgentListings />} />

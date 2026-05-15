@@ -48,26 +48,34 @@ export default function PropertyDetail() {
   async function sendEnquiryToDb() {
     if (!msg.trim()) { toast('Please write a message first', 'error'); return }
     setSending(true)
-    if (user) {
-      await sb.from('Inquiry').insert({
-        id: crypto.randomUUID(),
-        message: msg,
-        propertyId: String(p.id),
-        userId: user.id,
-        createdAt: new Date().toISOString(),
-      })
-      // Send email via edge function
+    // Allow anonymous enquiries — just save what we have
+    const payload = {
+      id:             crypto.randomUUID(),
+      message:        msg,
+      propertyId:     String(p.id),
+      property_title: p.title,
+      agent_id:       p.agentId || p.agent?.id || null,
+      userId:         user?.id || null,
+      buyer_name:     user ? (profile?.name || null) : null,
+      buyer_email:    user?.email || null,
+      buyer_phone:    user ? (profile?.phone || null) : null,
+      status:         'new',
+      createdAt:      new Date().toISOString(),
+    }
+    const { error } = await sb.from('Inquiry').insert(payload)
+    if (!error) {
+      // Send email via edge function (best-effort)
       try {
         await fetch('https://cmxblqzulbgtlinmyqxl.supabase.co/functions/v1/send-email', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNteGJscXp1bGJndGxpbm15cXhsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5OTc5NjUsImV4cCI6MjA5MzU3Mzk2NX0.CKdqvB84ELBEro0rYMnAJxKu9a9OV5G5R9mDDHUmGm0' },
           body: JSON.stringify({
-            to: [p.agent.phone ? `${p.agent.name.toLowerCase().replace(' ','.')}@hestia.tn` : 'contact@hestia.tn'],
+            to: [p.agent?.phone ? `${p.agent.name.toLowerCase().replace(/\s+/g,'.')}@hestia.tn` : 'contact@hestia.tn'],
             subject: `New enquiry: ${p.title}`,
-            html: `<p><b>Property:</b> ${p.title}</p><p><b>From:</b> ${user.email}</p><p><b>Message:</b> ${msg}</p>`
+            html: `<p><b>Property:</b> ${p.title}</p><p><b>From:</b> ${user?.email||'Anonymous'}</p><p><b>Message:</b><br>${msg}</p>`
           })
         })
-      } catch(e) { /* email best-effort */ }
+      } catch(e) { /* best-effort */ }
     }
     setSending(false)
     toast('Enquiry sent! The agent will contact you shortly.', 'success')

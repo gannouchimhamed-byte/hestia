@@ -2,14 +2,9 @@ import { useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import PropertyCard from '../components/PropertyCard'
-import { properties } from '../lib/data'
+import { useProperties } from '../lib/useProperties'
 
-// ── Data ─────────────────────────────────────────────────────────
-const FEATURED  = properties.filter(p => p.featured)
-const JUST_LISTED = [...properties].sort((a,b) =>
-  new Date(b.listedAt) - new Date(a.listedAt)
-).slice(0, 5)
-const FOR_RENT  = properties.filter(p => p.type === 'rent')
+// ── Data — fetched from Supabase, fallback to mock ─────────────────
 
 const NEW_PROJECTS = [
   {
@@ -187,6 +182,10 @@ function ProjectCard({ p }) {
 export default function Home() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const { properties } = useProperties()
+  const FEATURED    = properties.filter(p => p.featured)
+  const JUST_LISTED = [...properties].sort((a,b) => new Date(b.listedAt) - new Date(a.listedAt)).slice(0,6)
+  const FOR_RENT    = properties.filter(p => p.type === 'rent')
 
   return (
     <div className="min-h-screen bg-white">

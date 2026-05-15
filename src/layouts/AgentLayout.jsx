@@ -6,6 +6,7 @@ import AuthModal from '../components/AuthModal'
 const NAV = [
   { to:'/agent',              icon:'fa-tachometer-alt',  label:'Dashboard',   exact:true  },
   { to:'/agent/leads',        icon:'fa-users',           label:'Leads & CRM'              },
+  { to:'/agent/inquiries',    icon:'fa-inbox',           label:'Enquiries',   badge:'inq' },
   { to:'/agent/messages',     icon:'fa-comment-dots',    label:'Messages',    badge:3     },
   { to:'/agent/calendar',     icon:'fa-calendar-alt',    label:'Calendar'                 },
   { to:'/agent/listings',     icon:'fa-building',        label:'My Listings'              },
