@@ -2855,7 +2855,7 @@ async function addNewProperty() {
             `).join('');
         }
 
-        async async function toggleTask(taskId) {
+        async function toggleTask(taskId) {
             const task = tasks.find(t => String(t.id) === String(taskId));
             if (!task) return;
             task.completed = !task.completed;
@@ -3613,7 +3613,7 @@ async function addNewProperty() {
         }
 
         // Agent sign out
-        async async function agentSignOut() {
+        async function agentSignOut() {
                 await sb.auth.signOut();
                 showToast('Signed out');
                 window._dashInited = false;
@@ -3676,7 +3676,6 @@ async function addNewProperty() {
             renderProperties();
         }
 
-        async 
         async function loadRealTasks() {
             if (!agentUser) return;
             const { data } = await sb.from('agent_tasks').select('*').eq('agent_id', agentUser.id).order('due_date', { ascending: true });
