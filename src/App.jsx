@@ -19,6 +19,7 @@ import AdminListings from './pages/Admin/Listings'
 import { AdminAgents, AdminFlags, AdminHealth, AdminActivity, AdminBroadcast, AdminUsers } from './pages/Admin/Pages'
 import { FavoritesProvider } from './hooks/FavoritesContext'
 import Account from './pages/Account'
+import NotFound from './pages/NotFound'
 
 export default function App() {
   return (
@@ -55,6 +56,7 @@ export default function App() {
               <Route path="health"   element={<AdminHealth />} />
               <Route path="broadcast" element={<AdminBroadcast />} />
             </Route>
+            <Route path="*" element={<NotFound />} />
           </Routes>
           </FavoritesProvider>
         </ToastProvider>

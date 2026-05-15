@@ -695,8 +695,18 @@ function searchAgents(q){
 
 function openSuspendModal(id){suspendTargetId=id;openModal('suspendModal');}
 async function confirmSuspend(){
-  showToast('Agent suspended — access revoked','warning');
+  if(!suspendTargetId){closeModal('suspendModal');return;}
+  const {error} = await sb.from('profiles')
+    .update({suspended:true, suspended_at:new Date().toISOString()})
+    .eq('id', suspendTargetId);
+  if(error){showToast('Error: '+error.message,'error');return;}
+  // Also pause all their active listings
+  await sb.from('Property').update({status:'PAUSED'}).eq('agentId', suspendTargetId).eq('status','ACTIVE');
+  showToast('Agent suspended and listings paused','warning');
   closeModal('suspendModal');
+  suspendTargetId=null;
+  await loadProfiles();
+  renderDashboard();
 }
 
 // ── Users Table ───────────────────────────────────────────────
