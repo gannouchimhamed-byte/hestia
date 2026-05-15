@@ -728,7 +728,7 @@
                                 <p>All your client messages sync automatically. Click the WhatsApp icon on any lead to chat directly.</p>
                             </div>
                         </div>
-                        <button class="btn" style="background: rgba(255,255,255,0.2); color: white;" onclick="showToast('WhatsApp Business API settings')"><i class="fas fa-cog"></i> Configure</button>
+                        <button class="btn" style="background: rgba(255,255,255,0.2); color: white;" onclick="showToast('Connect your WhatsApp Business number in Settings > WhatsApp', 'info')"><i class="fas fa-cog"></i> Configure</button>
                     </div>
 
                     <div class="filters-bar">
@@ -812,8 +812,8 @@
                                 </div>
                                 <div class="chat-actions">
                                     <button class="action-btn call" onclick="callCurrentLead()" title="Call"><i class="fas fa-phone"></i></button>
-                                    <button class="action-btn" onclick="showToast('Video call coming soon')" title="Video"><i class="fas fa-video"></i></button>
-                                    <button class="action-btn" onclick="showToast('More options coming soon')" title="More"><i class="fas fa-ellipsis-v"></i></button>
+                                    <button class="action-btn" onclick="showToast('Video calls via WhatsApp — use the WhatsApp button instead', 'info')" title="Video"><i class="fas fa-video"></i></button>
+                                    <button class="action-btn" onclick="showToast('Additional options coming soon', 'info')" title="More"><i class="fas fa-ellipsis-v"></i></button>
                                 </div>
                             </div>
                             <div class="chat-messages" id="chatMessages">
@@ -824,8 +824,8 @@
                                 </div>
                             </div>
                             <div class="chat-input-area" id="chatInputArea" style="display: none;">
-                                <button class="chat-attachment-btn" onclick="showToast('Attachment upload coming soon')" title="Attach file"><i class="fas fa-paperclip"></i></button>
-                                <button class="chat-attachment-btn" onclick="showToast('Camera access coming soon')" title="Camera"><i class="fas fa-camera"></i></button>
+                                <button class="chat-attachment-btn" onclick="showToast('Send attachments via WhatsApp using the button above', 'info')" title="Attach file"><i class="fas fa-paperclip"></i></button>
+                                <button class="chat-attachment-btn" onclick="showToast('Camera access coming soon', 'info')" title="Camera"><i class="fas fa-camera"></i></button>
                                 <input type="text" class="chat-input" id="chatInput" placeholder="Type a message..." onkeypress="if(event.key==='Enter')sendMessage()">
                                 <button class="chat-send-btn" onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
                             </div>
@@ -837,7 +837,7 @@
                 <div class="page" id="page-calendar">
                     <div class="card">
                         <div class="card-header">
-                            <h3><i class="fas fa-calendar-alt" style="color: var(--primary);"></i> May 2026</h3>
+                            <h3><i class="fas fa-calendar-alt" style="color: var(--primary);"></i> <span id="calMonthTitle">May 2026</span></h3>
                             <div class="btn-group">
                                 <button class="btn btn-sm btn-ghost" onclick="changeMonth(-1)"><i class="fas fa-chevron-left"></i></button>
                                 <button class="btn btn-sm btn-ghost" onclick="goToToday()">Today</button>
@@ -950,10 +950,10 @@
                     <div class="card">
                         <div class="card-header">
                             <h3><i class="fas fa-folder-open" style="color: var(--primary);"></i> Documents</h3>
-                            <button class="btn btn-sm btn-primary" onclick="showToast('Document upload coming soon')"><i class="fas fa-upload"></i> Upload</button>
+                            <button class="btn btn-sm btn-primary" onclick="document.getElementById('docFileInput') ? document.getElementById('docFileInput').click() : showToast('Open a lead first to upload documents', 'info')"><i class="fas fa-upload"></i> Upload</button>
                         </div>
                         <div class="card-body">
-                            <div class="upload-zone" onclick="showToast('File picker would open')">
+                            <div class="upload-zone" onclick="document.getElementById('docFileInput') ? document.getElementById('docFileInput').click() : showToast('Open a lead first to upload documents', 'info')">
                                 <i class="fas fa-cloud-upload-alt"></i>
                                 <p><strong>Click to upload</strong> or drag and drop files here</p>
                                 <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;">PDF, DOC, JPG up to 20MB</p>
@@ -1221,7 +1221,7 @@
                     <div class="card" style="margin-bottom:1.5rem;">
                         <div class="card-header">
                             <h3><i class="fas fa-paper-plane" style="color:var(--primary);"></i> Automated Follow-up Sequences</h3>
-                            <button class="btn btn-sm btn-primary" onclick="showToast('Sequence builder coming soon')"><i class="fas fa-plus"></i> New Sequence</button>
+                            <button class="btn btn-sm btn-primary" onclick="showToast('Sequence builder will be available in the next update', 'info')"><i class="fas fa-plus"></i> New Sequence</button>
                         </div>
                         <div class="card-body">
                             <p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:1.5rem;">Automatically email or WhatsApp leads at the right time. Activate a sequence on any lead from the CRM.</p>
@@ -1799,6 +1799,9 @@
         ];
 
         let calendarEvents = []
+        let currentCalMonth = new Date().getMonth();
+        let currentCalYear  = new Date().getFullYear();
+        const MONTHS_LONG = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
         async function loadCalendarFromDB() {
             if (!sb || !currentUser) return;
@@ -2041,68 +2044,67 @@
             openModal('leadDetailModal');
         }
 
-        function updateLeadStatus(leadId, newStatus) {
-            const lead = leads.find(l => l.id === leadId);
-            if (lead) {
-                lead.status = newStatus;
-                lead.lastContact = new Date().toISOString().slice(0, 16).replace('T', ' ');
-                showToast(`Status updated to ${newStatus}`, 'success');
-                renderLeadsTable();
-                renderHotLeads();
-                renderPipeline();
+        async function updateLeadStatus(leadId, newStatus) {
+            const lead = leads.find(l => String(l.id) === String(leadId));
+            if (!lead) return;
+            lead.status = newStatus;
+            lead.lastContact = new Date().toISOString().slice(0,16).replace('T',' ');
+            // Persist — UUID leads are in Supabase, numeric ids are local mock
+            if (typeof leadId === 'string' && leadId.includes('-')) {
+                await sb.from('leads').update({ status: newStatus, last_contact: new Date().toISOString(), updated_at: new Date().toISOString() }).eq('id', leadId);
             }
+            showToast(`Status → ${newStatus}`, 'success');
+            renderLeadsTable(); renderHotLeads(); renderPipeline();
         }
 
-        function saveLeadNotes(leadId, notes) {
-            const lead = leads.find(l => l.id === leadId);
-            if (lead) {
-                lead.notes = notes;
-                showToast('Notes saved', 'success');
+        async function saveLeadNotes(leadId, notes) {
+            const lead = leads.find(l => String(l.id) === String(leadId));
+            if (!lead) return;
+            lead.notes = notes;
+            if (typeof leadId === 'string' && leadId.includes('-')) {
+                await sb.from('leads').update({ notes, updated_at: new Date().toISOString() }).eq('id', leadId);
             }
+            showToast('Notes saved', 'success');
         }
 
-        function addNewLead() {
-            const firstName = document.getElementById('newLeadFirstName').value;
-            const lastName = document.getElementById('newLeadLastName').value;
-            const phone = document.getElementById('newLeadPhone').value;
+        async function addNewLead() {
+            const firstName = document.getElementById('newLeadFirstName').value.trim();
+            const lastName  = document.getElementById('newLeadLastName').value.trim();
+            const phone     = document.getElementById('newLeadPhone').value.trim();
+            if (!firstName || !phone) { showToast('First name and phone are required', 'error'); return; }
 
-            if (!firstName || !lastName || !phone) {
-                showToast('Please fill in all required fields', 'error');
-                return;
-            }
-
-            const newLead = {
-                id: Math.max(...leads.map(l => l.id)) + 1,
-                firstName,
-                lastName,
+            const payload = {
+                agent_id:     agentUser.id,
+                first_name:   firstName,
+                last_name:    lastName,
                 phone,
-                email: document.getElementById('newLeadEmail').value,
-                property: document.getElementById('newLeadProperty').value,
-                status: document.getElementById('newLeadStatus').value,
-                priority: document.getElementById('newLeadPriority').value,
-                source: document.getElementById('newLeadSource').value,
-                lastContact: new Date().toISOString().slice(0, 16).replace('T', ' '),
-                notes: document.getElementById('newLeadNotes').value,
-                avatar: (firstName[0] + lastName[0]).toUpperCase()
+                email:        document.getElementById('newLeadEmail').value.trim(),
+                property:     document.getElementById('newLeadProperty')?.value?.trim() || '',
+                status:       document.getElementById('newLeadStatus')?.value || 'new',
+                priority:     document.getElementById('newLeadPriority')?.value || 'medium',
+                source:       document.getElementById('newLeadSource')?.value || 'Website',
+                notes:        document.getElementById('newLeadNotes')?.value?.trim() || '',
+                last_contact: new Date().toISOString(),
             };
 
+            const { data, error } = await sb.from('leads').insert(payload).select().single();
+            if (error) { showToast('Save failed: ' + error.message, 'error'); return; }
+
+            const newLead = {
+                id: data.id, firstName, lastName, phone,
+                email: payload.email, property: payload.property,
+                status: payload.status, priority: payload.priority,
+                source: payload.source, notes: payload.notes,
+                lastContact: new Date().toISOString().slice(0,16).replace('T',' '),
+                avatar: (firstName[0] + (lastName[0]||'X')).toUpperCase()
+            };
             leads.unshift(newLead);
-            showToast(`Lead ${firstName} ${lastName} added successfully!`, 'success');
+            showToast(`${firstName} ${lastName} added!`, 'success');
             closeModal('addLeadModal');
-
-            // Reset form
-            document.getElementById('newLeadFirstName').value = '';
-            document.getElementById('newLeadLastName').value = '';
-            document.getElementById('newLeadPhone').value = '';
-            document.getElementById('newLeadEmail').value = '';
-            document.getElementById('newLeadNotes').value = '';
-
-            renderLeadsTable();
-            renderHotLeads();
-            renderPipeline();
-            populateTaskLeadSelect();
-
-            // Update stats
+            ['newLeadFirstName','newLeadLastName','newLeadPhone','newLeadEmail','newLeadNotes'].forEach(id => {
+                const el = document.getElementById(id); if (el) el.value = '';
+            });
+            renderLeadsTable(); renderHotLeads(); renderPipeline(); populateTaskLeadSelect();
             document.getElementById('statTotalLeads').textContent = leads.length;
         }
 
@@ -2140,8 +2142,10 @@
         }
 
         function editLead(leadId) {
-            showToast('Edit lead feature coming in next update', 'info');
-        }
+                const lead = leads.find(l => String(l.id) === String(leadId));
+                if (!lead) return;
+                openLeadDetail(leadId);
+            }
 
         function exportLeads() {
             const csv = [
@@ -2298,41 +2302,47 @@
             }, 50);
         }
 
-        function sendMessage() {
+        async function sendMessage() {
             const input = document.getElementById('chatInput');
             const text = input.value.trim();
             if (!text || !currentLeadId) return;
 
-            const now = new Date();
+            const now  = new Date();
             const time = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
             if (!messages[currentLeadId]) messages[currentLeadId] = [];
-            messages[currentLeadId].push({
-                from: 'me',
-                text: text,
-                time: time,
-                date: 'Today'
-            });
-
+            messages[currentLeadId].push({ from: 'me', text, time });
             input.value = '';
-            openChat(currentLeadId);
 
-            // Simulate reply after 2 seconds
-            setTimeout(() => {
-                if (messages[currentLeadId]) {
-                    messages[currentLeadId].push({
-                        from: 'them',
-                        text: 'Thank you for your message! I will get back to you shortly.',
-                        time: time,
-                        date: 'Today'
-                    });
-                    if (currentPage === 'messages') {
-                        openChat(currentLeadId);
-                        renderMessagesList();
-                    }
-                    showToast('New message received!', 'info');
-                }
-            }, 2000);
+            // Render immediately
+            const container = document.getElementById('chatMessages');
+            if (container) {
+                const div = document.createElement('div');
+                div.style.cssText = 'display:flex;justify-content:flex-end;margin-bottom:8px';
+                div.innerHTML = `<div style="background:var(--primary);color:white;padding:10px 14px;border-radius:16px 16px 4px 16px;max-width:75%;font-size:0.875rem">
+                    <p style="margin:0">${text}</p>
+                    <p style="font-size:0.7rem;opacity:.6;margin:4px 0 0;text-align:right">${time}</p>
+                </div>`;
+                container.appendChild(div);
+                container.scrollTop = container.scrollHeight;
+            }
+
+            // Update last message in list
+            const lead = leads.find(l => String(l.id) === String(currentLeadId));
+            if (lead) {
+                const li = document.querySelector(`.message-item[data-lead-id="${currentLeadId}"] .message-preview`);
+                if (li) li.textContent = text;
+            }
+
+            // Save to Supabase (best-effort — only for UUID leads)
+            if (typeof currentLeadId === 'string' && currentLeadId.includes('-')) {
+                sb.from('agent_messages').insert({
+                    agent_id:   agentUser?.id,
+                    lead_id:    currentLeadId,
+                    direction:  'out',
+                    body:       text,
+                }).catch(() => {});
+            }
         }
 
         function searchMessages(query) {
@@ -2388,9 +2398,20 @@
         // ==================== CALENDAR ====================
         function renderCalendar() {
             const grid = document.getElementById('calendarGrid');
-            const daysInMonth = 31;
-            const firstDay = 4; // May 2026 starts on Thursday
-            const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            if (!grid) return;
+
+            const today = new Date();
+            const todayDay   = today.getDate();
+            const todayMonth = today.getMonth();
+            const todayYear  = today.getFullYear();
+
+            const daysInMonth = new Date(currentCalYear, currentCalMonth + 1, 0).getDate();
+            const firstDay    = new Date(currentCalYear, currentCalMonth, 1).getDay();
+            const dayNames    = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+            // Update header title
+            const titleEl = document.getElementById('calMonthTitle');
+            if (titleEl) titleEl.textContent = MONTHS_LONG[currentCalMonth] + ' ' + currentCalYear;
 
             let html = dayNames.map(d => `<div class="calendar-day-header">${d}</div>`).join('');
 
@@ -2401,12 +2422,12 @@
 
             for (let day = 1; day <= daysInMonth; day++) {
                 const dayEvents = calendarEvents.filter(e => e.day === day);
-                const isToday = day === 7;
+                const isToday = day === todayDay && currentCalMonth === todayMonth && currentCalYear === todayYear;
 
                 html += `
                     <div class="calendar-day" style="${isToday ? 'background: var(--primary-soft);' : ''}">
                         <div class="calendar-day-number" style="${isToday ? 'color: var(--primary); font-weight: 700;' : ''}">${day}${isToday ? ' <span style="font-size:0.7rem; color:var(--primary);">Today</span>' : ''}</div>
-                        ${dayEvents.map(e => `<div class="calendar-event ${e.type}" onclick="showToast('${e.text}')">${e.text}</div>`).join('')}
+                        ${dayEvents.map(e => `<div class="calendar-event ${e.type}" title="${e.text}">${e.text}</div>`).join('')}
                     </div>
                 `;
             }
@@ -2415,8 +2436,11 @@
         }
 
         function changeMonth(dir) {
-            showToast(dir > 0 ? 'Next month coming soon' : 'Previous month coming soon', 'info');
-        }
+                currentCalMonth += dir;
+                if (currentCalMonth > 11) { currentCalMonth = 0; currentCalYear++; }
+                if (currentCalMonth < 0)  { currentCalMonth = 11; currentCalYear--; }
+                renderCalendar();
+            }
 
         function goToToday() {
             renderCalendar();
@@ -2747,13 +2771,14 @@ async function addNewProperty() {
             `).join('');
         }
 
-        function toggleTask(taskId) {
-            const task = tasks.find(t => t.id === taskId);
-            if (task) {
-                task.completed = !task.completed;
-                renderTasks();
-                showToast(task.completed ? 'Task completed!' : 'Task reopened', 'success');
+        async function toggleTask(taskId) {
+            const task = tasks.find(t => String(t.id) === String(taskId));
+            if (!task) return;
+            task.completed = !task.completed;
+            if (typeof taskId === 'string' && taskId.includes('-')) {
+                await sb.from('agent_tasks').update({ completed: task.completed }).eq('id', taskId);
             }
+            renderTasks();
         }
 
         function isUrgent(dueDate) {
@@ -2970,17 +2995,43 @@ async function addNewProperty() {
             document.getElementById('settings-' + panel).classList.add('active');
         }
 
-        function saveProfile() {
-            showToast('Profile saved successfully!', 'success');
-        }
+        async function saveProfile() {
+                if (!agentUser) { showToast('Not signed in', 'error'); return; }
+                const fields = { name: 'profileName', phone: 'profilePhone', agency_name: 'profileAgency', bio: 'profileBio' };
+                const update = { updated_at: new Date().toISOString() };
+                Object.entries(fields).forEach(([col, id]) => {
+                    const el = document.getElementById(id);
+                    if (el && el.value.trim()) update[col] = el.value.trim();
+                });
+                const { error } = await sb.from('profiles').update(update).eq('id', agentUser.id);
+                if (error) { showToast('Save failed: ' + error.message, 'error'); return; }
+                if (agentProfile) Object.assign(agentProfile, update);
+                updateSidebarAgent(agentUser, agentProfile);
+                showToast('Profile saved!', 'success');
+            }
 
-        function saveNotifications() {
-            showToast('Notification preferences saved!', 'success');
-        }
+        async function saveNotifications() {
+                if (!agentUser) { showToast('Not signed in', 'error'); return; }
+                const update = {
+                    notification_email: document.getElementById('notifEmail') ? document.getElementById('notifEmail').checked : true,
+                    notification_sms:   document.getElementById('notifSms')   ? document.getElementById('notifSms').checked   : false,
+                    notification_push:  document.getElementById('notifPush')  ? document.getElementById('notifPush').checked  : true,
+                };
+                const { error } = await sb.from('profiles').update(update).eq('id', agentUser.id);
+                if (error) { showToast('Save failed: ' + error.message, 'error'); return; }
+                showToast('Notification settings saved!', 'success');
+            }
 
-        function saveWhatsAppSettings() {
-            showToast('WhatsApp settings saved! Changes will take effect immediately.', 'success');
-        }
+        async function saveWhatsAppSettings() {
+                if (!agentUser) return;
+                const numEl = document.getElementById('waPhoneNumber');
+                const update = {};
+                if (numEl && numEl.value.trim()) update.whatsapp_number = numEl.value.trim();
+                if (Object.keys(update).length) {
+                    await sb.from('profiles').update(update).eq('id', agentUser.id);
+                }
+                showToast('WhatsApp settings saved!', 'success');
+            }
 
         // ==================== UTILITIES ====================
         function formatDate(dateStr) {
@@ -3428,7 +3479,7 @@ async function addNewProperty() {
                     const { data: prof } = await client.from('profiles').select('*').eq('id', agentUser.id).single();
                     agentProfile = prof;
                     updateSidebarAgent(agentUser, agentProfile);
-                    if (!window._dashInited) { window._dashInited = true; init(); loadCalendarFromDB(); }
+                    if (!window._dashInited) { window._dashInited = true; init(); loadCalendarFromDB(); loadRealLeads(); loadRealTasks(); }
                 }
             } catch(e) {
                 btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Sign In'; btn.disabled = false;
@@ -3468,10 +3519,12 @@ async function addNewProperty() {
         }
 
         // Agent sign out
-        async function agentSignOut() {
-            await sb.auth.signOut();
-            showToast('Signed out');
-        }
+        async async function agentSignOut() {
+                await sb.auth.signOut();
+                showToast('Signed out');
+                window._dashInited = false;
+                setTimeout(() => window.location.reload(), 700);
+            }
 
         // Show / hide auth wall
         function showAuthWall(show) {
@@ -3500,7 +3553,7 @@ async function addNewProperty() {
                 agentProfile = data;
                 updateSidebarAgent(agentUser, agentProfile);
                 showAuthWall(false);
-                if (!window._dashInited) { window._dashInited = true; init(); loadCalendarFromDB(); }
+                if (!window._dashInited) { window._dashInited = true; init(); loadCalendarFromDB(); loadRealLeads(); loadRealTasks(); }
             } else {
                 showAuthWall(true);
                 window._dashInited = false;
@@ -3529,25 +3582,48 @@ async function addNewProperty() {
             renderProperties();
         }
 
+        async 
+        async function loadRealTasks() {
+            if (!agentUser) return;
+            const { data } = await sb.from('agent_tasks').select('*').eq('agent_id', agentUser.id).order('created_at', { ascending: false });
+            if (!data?.length) return;
+            tasks = data.map(t => ({
+                id:        t.id,
+                title:     t.title,
+                dueDate:   t.due_date,
+                priority:  t.priority || 'medium',
+                leadId:    t.lead_id,
+                completed: t.completed,
+            }));
+            renderTasks();
+        }
+        
         async function loadRealLeads() {
-            const { data } = await sb.from('Inquiry').select('*, Property(title)').order('createdAt', { ascending: false });
-            if (!data || !data.length) return;
-            leads = data.map((inq, i) => ({
-                id: inq.id,
-                firstName: 'Client',
-                lastName: String(i + 1),
-                email: '',
-                phone: '',
-                property: inq.Property?.title || 'Unknown property',
-                status: 'new',
-                priority: 'medium',
-                source: 'Website',
-                lastContact: inq.createdAt?.slice(0,16).replace('T',' ') || 'Now',
-                notes: inq.message || '',
-                avatar: 'C' + (i+1)
+            if (!agentUser) return;
+            const { data, error } = await sb.from('leads')
+                .select('*')
+                .eq('agent_id', agentUser.id)
+                .order('created_at', { ascending: false });
+            if (error || !data?.length) return;
+            leads = data.map(row => ({
+                id:          row.id,
+                firstName:   row.first_name,
+                lastName:    row.last_name || '',
+                phone:       row.phone || '',
+                email:       row.email || '',
+                property:    row.property || '',
+                status:      row.status || 'new',
+                priority:    row.priority || 'medium',
+                source:      row.source || 'Website',
+                lastContact: (row.last_contact || row.created_at || '').slice(0,16).replace('T',' '),
+                notes:       row.notes || '',
+                avatar:      ((row.first_name||'?')[0] + (row.last_name||'X')[0]).toUpperCase()
             }));
             renderLeadsTable();
             renderHotLeads();
+            renderPipeline();
+            if (document.getElementById('statTotalLeads'))
+                document.getElementById('statTotalLeads').textContent = leads.length;
         }
 
         // ════════════════════════════════════════════════════════
