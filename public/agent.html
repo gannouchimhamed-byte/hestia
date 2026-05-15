@@ -749,7 +749,7 @@
                             <h3><i class="fas fa-users" style="color: var(--primary);"></i> All Leads</h3>
                             <div class="btn-group">
                                 <button class="btn btn-sm btn-ghost" onclick="exportLeads()"><i class="fas fa-download"></i> Export</button>
-                                <button class="btn btn-sm btn-ghost" onclick="showToast('Import feature coming soon')"><i class="fas fa-upload"></i> Import</button>
+                                <button class="btn btn-sm btn-ghost" onclick="openLeadCsvImport()"><i class="fas fa-upload"></i> Import</button>
                             </div>
                         </div>
                         <div class="card-body" style="padding: 0;">
@@ -1126,15 +1126,15 @@
                                     <div class="card-body">
                                         <div class="form-group">
                                             <label>Current Password</label>
-                                            <input type="password" placeholder="••••••••">
+                                            <input type="password" id="currentPassword" placeholder="••••••••">
                                         </div>
                                         <div class="form-group">
                                             <label>New Password</label>
-                                            <input type="password" placeholder="••••••••">
+                                            <input type="password" id="newPassword" placeholder="••••••••">
                                         </div>
                                         <div class="form-group">
                                             <label>Confirm New Password</label>
-                                            <input type="password" placeholder="••••••••">
+                                            <input type="password" id="confirmPassword" placeholder="••••••••">
                                         </div>
                                         <div class="form-group">
                                             <label class="toggle-switch">
@@ -1143,7 +1143,7 @@
                                                 <span>Two-factor authentication</span>
                                             </label>
                                         </div>
-                                        <button class="btn btn-primary" onclick="showToast('Password updated successfully')"><i class="fas fa-lock"></i> Update Password</button>
+                                        <button class="btn btn-primary" onclick="changePassword()"><i class="fas fa-lock"></i> Update Password</button>
                                     </div>
                                 </div>
                             </div>
@@ -1600,7 +1600,7 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-ghost" onclick="closeModal('whatsappTemplatesModal')">Close</button>
-                <button class="btn btn-whatsapp" onclick="showToast('Custom template creation coming soon')"><i class="fas fa-plus"></i> Create Template</button>
+                <button class="btn btn-whatsapp" onclick="createCustomTemplate()"><i class="fas fa-plus"></i> Create Template</button>
             </div>
         </div>
     </div>
@@ -3090,12 +3090,17 @@ async function addNewProperty() {
 
         async function saveProfile() {
                 if (!agentUser) { showToast('Not signed in', 'error'); return; }
-                const fields = { name: 'profileName', phone: 'profilePhone', agency_name: 'profileAgency', bio: 'profileBio' };
-                const update = { updated_at: new Date().toISOString() };
-                Object.entries(fields).forEach(([col, id]) => {
-                    const el = document.getElementById(id);
-                    if (el && el.value.trim()) update[col] = el.value.trim();
-                });
+                const firstName = (document.getElementById('settingFirstName')?.value || '').trim();
+                const lastName  = (document.getElementById('settingLastName')?.value  || '').trim();
+                const phone     = (document.getElementById('settingPhone')?.value     || '').trim();
+                const agency    = (document.getElementById('settingAgency')?.value    || '').trim();
+                const bio       = (document.getElementById('settingBio')?.value       || '').trim();
+                const name      = [firstName, lastName].filter(Boolean).join(' ') || null;
+                const update    = { updated_at: new Date().toISOString() };
+                if (name)   update.name          = name;
+                if (phone)  update.phone          = phone;
+                if (agency) update.agency_name    = agency;
+                if (bio)    update.bio             = bio;
                 const { error } = await sb.from('profiles').update(update).eq('id', agentUser.id);
                 if (error) { showToast('Save failed: ' + error.message, 'error'); return; }
                 if (agentProfile) Object.assign(agentProfile, update);
@@ -3613,7 +3618,85 @@ async function addNewProperty() {
         }
 
         // Agent sign out
-        async function agentSignOut() {
+        
+        async function changePassword() {
+            const currentPwd = document.getElementById('currentPassword')?.value;
+            const newPwd     = document.getElementById('newPassword')?.value;
+            const confirmPwd = document.getElementById('confirmPassword')?.value;
+            if (!newPwd || newPwd.length < 8) { showToast('Password must be at least 8 characters', 'error'); return; }
+            if (newPwd !== confirmPwd) { showToast('Passwords do not match', 'error'); return; }
+            const { error } = await sb.auth.updateUser({ password: newPwd });
+            if (error) { showToast('Error: ' + error.message, 'error'); return; }
+            showToast('Password updated successfully!', 'success');
+            ['currentPassword','newPassword','confirmPassword'].forEach(id => {
+                const el = document.getElementById(id); if (el) el.value = '';
+            });
+        }
+
+
+        function openLeadCsvImport() {
+            // Create a simple file input and trigger it
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.csv';
+            input.onchange = async e => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const text = await file.text();
+                const lines = text.trim().split('\n');
+                const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g,''));
+                const rows = lines.slice(1).map(line => {
+                    const vals = line.split(',').map(v => v.trim().replace(/"/g,''));
+                    const obj = {};
+                    headers.forEach((h,i) => obj[h] = vals[i]||'');
+                    return obj;
+                }).filter(r => r['first_name'] || r['firstname'] || r['name'] || r['phone']);
+
+                if (!rows.length) { showToast('No valid rows found. Check CSV has: first_name, phone columns', 'error'); return; }
+
+                let imported = 0, failed = 0;
+                for (const row of rows) {
+                    const firstName = row['first_name'] || row['firstname'] || (row['name']||'').split(' ')[0] || 'Unknown';
+                    const lastName  = row['last_name']  || row['lastname']  || (row['name']||'').split(' ').slice(1).join(' ') || '';
+                    const payload = {
+                        agent_id:     agentUser.id,
+                        first_name:   firstName,
+                        last_name:    lastName,
+                        phone:        row['phone'] || row['tel'] || '',
+                        email:        row['email'] || '',
+                        property:     row['property'] || row['interest'] || '',
+                        status:       row['status'] || 'new',
+                        priority:     row['priority'] || 'medium',
+                        source:       row['source'] || 'Import',
+                        notes:        row['notes'] || '',
+                        last_contact: new Date().toISOString(),
+                    };
+                    const { error } = await sb.from('leads').insert(payload);
+                    if (!error) imported++; else failed++;
+                }
+                showToast(`Imported ${imported} leads${failed ? ', ' + failed + ' failed' : ''}`, imported > 0 ? 'success' : 'error');
+                await loadRealLeads();
+                renderLeadsTable(); renderHotLeads(); renderPipeline();
+            };
+            input.click();
+        }
+
+
+        function createCustomTemplate() {
+            const name = prompt('Template name:');
+            if (!name) return;
+            const body = prompt('Template message:\n(use {name} for lead name, {property} for property)');
+            if (!body) return;
+            // Add to templates list in memory
+            if (!window.customTemplates) window.customTemplates = [];
+            window.customTemplates.push({ name, body });
+            // Save to localStorage
+            localStorage.setItem('hestia_templates', JSON.stringify(window.customTemplates));
+            renderTemplates();
+            showToast('Template "' + name + '" created!', 'success');
+        }
+
+async function agentSignOut() {
                 await sb.auth.signOut();
                 showToast('Signed out');
                 window._dashInited = false;
@@ -3631,12 +3714,22 @@ async function addNewProperty() {
             const nameEl = document.getElementById('sidebarAgentName');
             const roleEl = document.getElementById('sidebarAgentRole');
             if (nameEl) nameEl.textContent = profile?.name || user.email.split('@')[0];
-            if (roleEl) roleEl.textContent = (profile?.role || 'AGENT') + ' · ' + (user.email.split('@')[1] || 'Hestia');
-            if (profile?.name) {
-                document.getElementById('settingFirstName').value = profile.name.split(' ')[0] || '';
-                document.getElementById('settingLastName').value  = profile.name.split(' ').slice(1).join(' ') || '';
-            }
-            document.getElementById('settingEmail').value = user.email;
+            if (roleEl) roleEl.textContent = (profile?.role || 'AGENT') + ' · ' + (user.email || '');
+
+            // Populate settings form with current profile data
+            const parts = (profile?.name || '').split(' ');
+            const setVal = (id, val) => { const el = document.getElementById(id); if (el && val) el.value = val; };
+            setVal('settingFirstName', parts[0] || '');
+            setVal('settingLastName',  parts.slice(1).join(' ') || '');
+            setVal('settingEmail',     user.email || '');
+            setVal('settingPhone',     profile?.phone || '');
+            setVal('settingAgency',    profile?.agency_name || '');
+            setVal('settingBio',       profile?.bio || '');
+            setVal('whatsappPhone',    profile?.whatsapp_number || profile?.phone || '');
+
+            // Sidebar profile image
+            const imgEl = document.getElementById('sidebarAgentImg');
+            if (imgEl && profile?.avatar_url) imgEl.src = profile.avatar_url;
         }
 
         // ── Supabase auth state ──────────────────────────────────
