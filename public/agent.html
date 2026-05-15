@@ -1503,9 +1503,43 @@
                 </div>
                 <div class="form-group"><label>Description</label><textarea id="newPropDesc" placeholder="Describe the property..."></textarea></div>
             </div>
+
+            <!-- PHOTOS UPLOAD -->
+            <div class="form-group" style="margin-top:1rem">
+                <label class="form-label"><i class="fas fa-camera" style="color:var(--primary);margin-right:6px"></i>Photos <span style="font-weight:400;color:var(--text-muted);font-size:0.75rem">— First photo = cover image</span></label>
+                <div id="photoDrop" onclick="document.getElementById('photoFileInput').click()"
+                    ondragover="event.preventDefault()" ondrop="handlePhotoDrop(event)"
+                    style="border:2px dashed #d1d5db;border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:all .2s"
+                    onmouseenter="this.style.borderColor='var(--primary)'" onmouseleave="this.style.borderColor='#d1d5db'">
+                    <i class="fas fa-cloud-upload-alt" style="font-size:1.5rem;color:#d1d5db;display:block;margin-bottom:4px"></i>
+                    <p style="font-size:0.85rem;font-weight:600;color:#6b7280;margin:0">Drag &amp; drop photos or click to browse</p>
+                    <p style="font-size:0.75rem;color:#9ca3af;margin:4px 0 0">JPG, PNG, WEBP — max 10MB each</p>
+                    <input id="photoFileInput" type="file" accept="image/*" multiple style="display:none"
+                        onchange="handlePhotoSelect(this.files)">
+                </div>
+                <div id="photoPreviewGrid" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px"></div>
+            </div>
+
+            <!-- FLOOR PLAN UPLOAD -->
+            <div class="form-group" style="margin-top:0.5rem">
+                <label class="form-label"><i class="fas fa-drafting-compass" style="color:var(--primary);margin-right:6px"></i>Floor Plan <span style="font-weight:400;color:var(--text-muted);font-size:0.75rem">— Image or PDF</span></label>
+                <div id="floorPlanDrop" onclick="document.getElementById('floorPlanInput').click()"
+                    ondragover="event.preventDefault()" ondrop="handleFloorPlanDrop(event)"
+                    style="border:2px dashed #d1d5db;border-radius:12px;padding:14px;cursor:pointer;display:flex;align-items:center;gap:12px;transition:all .2s"
+                    onmouseenter="this.style.borderColor='var(--primary)'" onmouseleave="this.style.borderColor='#d1d5db'">
+                    <i class="fas fa-file-image" style="font-size:1.3rem;color:#d1d5db"></i>
+                    <div>
+                        <p style="font-size:0.85rem;font-weight:600;color:#6b7280;margin:0" id="floorPlanLabel">Upload floor plan</p>
+                        <p style="font-size:0.75rem;color:#9ca3af;margin:0">JPG, PNG or PDF</p>
+                    </div>
+                    <input id="floorPlanInput" type="file" accept="image/*,.pdf" style="display:none"
+                        onchange="handleFloorPlanSelect(this.files[0])">
+                </div>
+            </div>
+
             <div class="modal-footer">
-                <button class="btn btn-ghost" onclick="closeModal('addPropertyModal')">Cancel</button>
-                <button class="btn btn-primary" onclick="addNewProperty()"><i class="fas fa-save"></i> Save Property</button>
+                <button class="btn btn-ghost" onclick="closeModal('addPropertyModal');resetPropertyForm()">Cancel</button>
+                <button class="btn btn-primary" id="savePropertyBtn" onclick="addNewProperty()"><i class="fas fa-save"></i> Save Property</button>
             </div>
         </div>
     </div>
@@ -2535,42 +2569,166 @@
             renderProperties(type);
         }
 
-        function addNewProperty() {
-            const title = document.getElementById('newPropTitle').value;
-            const price = parseInt(document.getElementById('newPropPrice').value);
+        
+        // ── Photo + Floor Plan upload (Supabase Storage) ──────────────────
+        const STORAGE_URL = 'https://cmxblqzulbgtlinmyqxl.supabase.co/storage/v1/object/property-images/';
+        const DOCS_URL    = 'https://cmxblqzulbgtlinmyqxl.supabase.co/storage/v1/object/property-docs/';
+        let pendingPhotos    = [];   // File objects
+        let uploadedPhotoUrls = [];  // string URLs (already uploaded)
+        let pendingFloorPlan  = null;
+        let uploadedFloorPlanUrl = null;
 
-            if (!title || !price) {
-                showToast('Please fill in required fields', 'error');
+        function handlePhotoDrop(e) {
+            e.preventDefault();
+            const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+            files.forEach(addPhotoPreview);
+        }
+
+        function handlePhotoSelect(files) {
+            Array.from(files).forEach(addPhotoPreview);
+        }
+
+        function addPhotoPreview(file) {
+            pendingPhotos.push(file);
+            const grid = document.getElementById('photoPreviewGrid');
+            const idx = pendingPhotos.length - 1;
+            const reader = new FileReader();
+            reader.onload = ev => {
+                const wrap = document.createElement('div');
+                wrap.style.cssText = 'position:relative;width:90px;height:75px;border-radius:10px;overflow:hidden;border:1px solid #e5e7eb;flex-shrink:0';
+                wrap.id = 'photo-preview-' + idx;
+                wrap.innerHTML = `
+                    <img src="${ev.target.result}" style="width:100%;height:100%;object-fit:cover">
+                    ${idx === 0 ? '<span style="position:absolute;bottom:0;left:0;right:0;background:var(--primary);color:white;font-size:10px;font-weight:700;text-align:center;padding:2px">Cover</span>' : ''}
+                    <button onclick="removePhoto(${idx})" style="position:absolute;top:3px;right:3px;width:18px;height:18px;background:#ef4444;color:white;border:none;border-radius:50%;cursor:pointer;font-size:9px;display:flex;align-items:center;justify-content:center">✕</button>
+                `;
+                grid.appendChild(wrap);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removePhoto(idx) {
+            pendingPhotos[idx] = null;
+            const el = document.getElementById('photo-preview-' + idx);
+            if (el) el.remove();
+        }
+
+        function handleFloorPlanDrop(e) {
+            e.preventDefault();
+            const file = Array.from(e.dataTransfer.files)[0];
+            if (file) handleFloorPlanSelect(file);
+        }
+
+        function handleFloorPlanSelect(file) {
+            if (!file) return;
+            pendingFloorPlan = file;
+            document.getElementById('floorPlanLabel').textContent = file.name;
+            document.getElementById('floorPlanDrop').style.borderColor = 'var(--primary)';
+            document.getElementById('floorPlanDrop').style.background = 'var(--primary-soft)';
+        }
+
+        async function uploadToStorage(file, bucket) {
+            const token = (await sb.auth.getSession()).data.session?.access_token;
+            if (!token) throw new Error('Not authenticated');
+            const ext  = file.name.split('.').pop();
+            const path = agentUser.id + '/' + Date.now() + '-' + Math.random().toString(36).slice(2) + '.' + ext;
+            const res  = await fetch(
+                `https://cmxblqzulbgtlinmyqxl.supabase.co/storage/v1/object/${bucket}/${path}`,
+                { method:'POST', headers:{ Authorization:'Bearer '+token, 'x-upsert':'false', 'Content-Type':file.type }, body: file }
+            );
+            if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Upload failed'); }
+            return `https://cmxblqzulbgtlinmyqxl.supabase.co/storage/v1/object/public/${bucket}/${path}`;
+        }
+
+        function resetPropertyForm() {
+            pendingPhotos = []; uploadedPhotoUrls = []; pendingFloorPlan = null; uploadedFloorPlanUrl = null;
+            document.getElementById('photoPreviewGrid').innerHTML = '';
+            document.getElementById('floorPlanLabel').textContent = 'Upload floor plan';
+            document.getElementById('floorPlanDrop').style.borderColor = '#d1d5db';
+            document.getElementById('floorPlanDrop').style.background = '';
+            ['newPropTitle','newPropPrice','newPropAreaSize','newPropBeds','newPropBaths','newPropDesc'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+        }
+
+async function addNewProperty() {
+            const title = document.getElementById('newPropTitle').value.trim();
+            const price = parseFloat(document.getElementById('newPropPrice').value);
+            const city  = document.getElementById('newPropCity').value;
+
+            if (!title || !price || !city) {
+                showToast('Title, price and city are required', 'error');
                 return;
             }
 
-            const newProp = {
-                id: Math.max(...properties.map(p => p.id)) + 1,
+            // Disable save button
+            const btn = document.getElementById('savePropertyBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Uploading...';
+
+            // Upload photos
+            const imageUrls = [];
+            for (const file of pendingPhotos.filter(Boolean)) {
+                try {
+                    const url = await uploadToStorage(file, 'property-images');
+                    imageUrls.push(url);
+                } catch(e) {
+                    showToast('Photo upload failed: ' + e.message, 'error');
+                }
+            }
+
+            // Upload floor plan
+            let floorPlanUrl = null;
+            if (pendingFloorPlan) {
+                try {
+                    floorPlanUrl = await uploadToStorage(pendingFloorPlan, 'property-docs');
+                } catch(e) {
+                    showToast('Floor plan upload failed', 'warning');
+                }
+            }
+
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Saving...';
+
+            const listingType = document.getElementById('newPropType').value;
+            const payload = {
+                id:           crypto.randomUUID(),
                 title,
                 price,
-                type: document.getElementById('newPropType').value,
-                city: document.getElementById('newPropCity').value,
-                area: document.getElementById('newPropArea').value,
-                beds: parseInt(document.getElementById('newPropBeds').value) || 0,
-                baths: parseInt(document.getElementById('newPropBaths').value) || 0,
-                size: parseInt(document.getElementById('newPropAreaSize').value) || 0,
-                status: 'active',
-                image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=80'
+                listingType:  listingType === 'rent' ? 'RENT' : 'SALE',
+                type:         listingType,
+                city,
+                address:      city,
+                description:  document.getElementById('newPropDesc').value || '',
+                bedrooms:     parseInt(document.getElementById('newPropBeds').value) || 0,
+                bathrooms:    parseInt(document.getElementById('newPropBaths').value) || 0,
+                area:         parseFloat(document.getElementById('newPropAreaSize').value) || 0,
+                images:       imageUrls,
+                floor_plan_url: floorPlanUrl,
+                whatsapp_phone: agentProfile?.phone || '',
+                agentId:      agentUser.id,
+                status:       'PENDING',
+                featured:     false,
+                viewCount:    0,
+                createdAt:    new Date().toISOString(),
+                updatedAt:    new Date().toISOString(),
             };
 
-            properties.unshift(newProp);
-            showToast('Property added successfully!', 'success');
-            closeModal('addPropertyModal');
-            renderProperties();
+            const { error } = await sb.from('Property').insert(payload);
+            if (error) {
+                showToast('Save failed: ' + error.message, 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fas fa-save"></i> Save Property';
+                return;
+            }
 
-            // Reset form
-            document.getElementById('newPropTitle').value = '';
-            document.getElementById('newPropPrice').value = '';
-            document.getElementById('newPropArea').value = '';
-            document.getElementById('newPropBeds').value = '';
-            document.getElementById('newPropBaths').value = '';
-            document.getElementById('newPropAreaSize').value = '';
-            document.getElementById('newPropDesc').value = '';
+            showToast('Listing submitted for approval! It will go live within 24 hours.', 'success');
+            closeModal('addPropertyModal');
+            resetPropertyForm();
+            loadAgentProperties();
+
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-save"></i> Save Property';
         }
 
         // ==================== TASKS ====================
