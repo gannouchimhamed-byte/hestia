@@ -1,21 +1,50 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { properties } from '../lib/data'
 import PropertyMap from '../components/PropertyMap'
 import { useToast } from '../hooks/useToast'
 import { useAuth } from '../hooks/useAuth'
 import { useFavCtx } from '../hooks/FavoritesContext'
 import { sb } from '../lib/supabase'
+import { mapProperty } from '../lib/useProperties'
 
 const POI_ICONS = { school: 'fa-graduation-cap', hospital: 'fa-hospital', transport: 'fa-bus', shop: 'fa-shopping-cart' }
+
+// UUID detection — Supabase IDs look like f3a9b2c1-1234-...
+const isUUID = id => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
 
 export default function PropertyDetail() {
   const { t } = useTranslation()
   const { id }    = useParams()
   const navigate  = useNavigate()
   const toast     = useToast()
-  const p         = properties[parseInt(id)]
+
+  // For Supabase listings (UUID ids)
+  const [dbProp, setDbProp]     = useState(null)
+  const [dbLoading, setDBLoad]  = useState(false)
+  const [dbError, setDbError]   = useState(false)
+
+  useEffect(() => {
+    if (!isUUID(id)) return  // mock property — no fetch needed
+    setDBLoad(true)
+    async function fetch() {
+      const { data, error } = await sb.from('Property').select('*').eq('id', id).single()
+      if (error || !data) { setDbError(true); setDBLoad(false); return }
+      // Fetch agent profile
+      let agentProfile = null
+      if (data.agentId) {
+        const { data: ap } = await sb.from('profiles').select('id,name,phone,avatar_url').eq('id', data.agentId).single()
+        agentProfile = ap
+      }
+      setDbProp(mapProperty(data, agentProfile))
+      setDBLoad(false)
+    }
+    fetch()
+  }, [id])
+
+  // Resolve the property — mock or DB
+  const p = isUUID(id) ? dbProp : properties[parseInt(id)]
   const [photoIdx, setPhotoIdx] = useState(0)
   const [tab, setTab]           = useState('photos')
   const [msg, setMsg]           = useState("Hi, I'm interested in this property. Please contact me.")
@@ -28,7 +57,13 @@ export default function PropertyDetail() {
   const favCtx = useFavCtx()
   const isFav = favCtx ? favCtx.favIds.has(String(p?.id)) : false
 
-  if (!p) return (
+  if (dbLoading) return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <i className="fas fa-circle-notch fa-spin text-primary text-3xl" />
+    </div>
+  )
+
+  if (!p || dbError) return (
     <div className="min-h-screen flex items-center justify-center flex-col gap-4 bg-gray-50">
       <i className="fas fa-home text-6xl text-gray-200" />
       <h2 className="text-2xl font-bold text-gray-600">Property not found</h2>
@@ -39,7 +74,7 @@ export default function PropertyDetail() {
   )
 
   const similar = properties
-    .filter(s => s.id !== p.id && s.city === p.city && s.type === p.type)
+    .filter(s => String(s.id) !== String(p.id) && s.city === p.city && s.type === p.type)
     .sort((a,b) => Math.abs(a.priceValue-p.priceValue) - Math.abs(b.priceValue-p.priceValue))
     .slice(0,3)
 
