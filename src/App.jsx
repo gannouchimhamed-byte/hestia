@@ -9,20 +9,20 @@ import AgentLayout from './layouts/AgentLayout'
 import AdminLayout from './layouts/AdminLayout'
 import AgentDashboard from './pages/Agent/Dashboard'
 import AgentLeads from './pages/Agent/Leads'
-const AgentListings = lazy(() => import('./pages/Agent/Listings'))
+import AgentListings from './pages/Agent/Listings'
 import AgentCalendar from './pages/Agent/Calendar'
 import AgentCommission from './pages/Agent/Commission'
 import AgentMessages from './pages/Agent/Messages'
-const AgentInquiries = lazy(() => import('./pages/Agent/Inquiries'))
+import AgentInquiries from './pages/Agent/Inquiries'
 import AdminDashboard from './pages/Admin/Dashboard'
 import AdminListings from './pages/Admin/Listings'
 import { AdminAgents, AdminFlags, AdminHealth, AdminActivity, AdminBroadcast, AdminUsers } from './pages/Admin/Pages'
 import { FavoritesProvider } from './hooks/FavoritesContext'
-const Account = lazy(() => import('./pages/Account'))
+import Account from './pages/Account'
 import NotFound from './pages/NotFound'
-const Privacy = lazy(() => import('./pages/Privacy'))
-const Terms = lazy(() => import('./pages/Terms'))
-const About = lazy(() => import('./pages/About'))
+import Privacy from './pages/Privacy'
+import Terms from './pages/Terms'
+import About from './pages/About'
 
 export default function App() {
   return (
@@ -30,7 +30,6 @@ export default function App() {
       <AuthProvider>
         <ToastProvider>
           <FavoritesProvider>
-          <Suspense fallback={<div className='min-h-screen flex items-center justify-center'><i className='fas fa-circle-notch fa-spin text-primary text-2xl' /></div>}>
           <Routes>
             {/* Client site */}
             <Route path="/" element={<><Navbar /><Home /></>} />
@@ -65,7 +64,6 @@ export default function App() {
             <Route path="/terms"   element={<><Navbar /><Terms /></>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
-          </Suspense>
           </FavoritesProvider>
         </ToastProvider>
       </AuthProvider>
