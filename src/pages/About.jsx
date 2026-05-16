@@ -32,9 +32,9 @@ const VALUES = [
 
 const TEAM = [
   {
-    name: 'Mohamed Gannouchi',
+    name: 'Mhamed G.',
     role: 'Founder & CEO',
-    bio: 'Spent years navigating Tunisia\'s fragmented property market and decided to build the platform he always wished existed.',
+    bio: 'Studied and worked abroad for several years. Came back to Tunisia, tried to find a property, and decided to build the platform that should have already existed.',
     initials: 'MG',
     color: 'bg-primary',
   },
@@ -70,25 +70,25 @@ export default function About() {
       <div className="max-w-3xl mx-auto px-4 py-16">
         <div className="space-y-6 text-gray-600 text-lg leading-relaxed">
           <p>
-            Tunisia has a vibrant real estate market. Millions of people buy, rent, and invest in property every year. But for a long time, finding the right property has been unnecessarily hard — listings scattered across dozens of platforms, prices that bear no relation to reality, and agents with no tools to manage their clients properly.
+            After years studying and working abroad, coming back to Tunisia to find a property felt like stepping back in time. Not because the market was small — Tunisia has a rich and active real estate scene. But because finding something felt unnecessarily painful.
           </p>
           <p>
-            We believed there had to be a better way. So we built one.
+            Abroad, you open an app, set your filters, book a viewing, sign a contract. In Tunisia, you scroll through Facebook groups full of duplicate posts and suspiciously round prices. You call numbers that don't answer. You visit apartments that look nothing like the photos. You deal with agents who have no system to follow up, no tools to manage their clients, and no way to stand out from the chaos.
           </p>
           <p>
-            <strong className="text-gray-900">Hestia</strong> is Tunisia's first real estate platform built with two goals in mind: give buyers and renters a trustworthy place to find their next home, and give agents the professional tools they deserve to grow their business.
+            The frustration was not with the people — the agents, the landlords, the developers. Most of them were working hard with what they had. The frustration was with the infrastructure. Tunisia deserved something better.
           </p>
           <p>
-            Every listing on Hestia is reviewed by our team before it goes live. Every agent is verified. Every enquiry goes directly to a real person who can help. That is not the norm in Tunisian real estate today — but we are making it the standard.
+            <strong className="text-gray-900">Hestia</strong> was built to close that gap. A platform where every listing is verified before it goes live. Where buyers can search with real filters and get real results. Where agents finally have the professional tools they need — a CRM, a lead inbox, a calendar, a commission tracker — not a WhatsApp group and an Excel file.
           </p>
           <blockquote className="border-l-4 border-accent pl-6 py-2 my-8">
             <p className="text-gray-700 text-xl font-medium italic">
-              "I wanted to build the platform I wished existed when I was searching for my first apartment in Tunis. Something honest, fast, and built for how people actually search today."
+              "I know what it feels like to search for a property somewhere that works, and I know what it feels like to do it here. That gap is not acceptable — and it does not have to exist."
             </p>
-            <footer className="text-gray-400 text-sm mt-3 font-semibold not-italic">— Mohamed Gannouchi, Founder</footer>
+            <footer className="text-gray-400 text-sm mt-3 font-semibold not-italic">— Founder, Hestia</footer>
           </blockquote>
           <p>
-            We are just getting started. The platform is live, the listings are growing, and the feedback from both buyers and agents has been clear: this is what the market needed.
+            We are building for the Tunisia that already exists — ambitious, connected, and ready for something better.
           </p>
         </div>
       </div>
