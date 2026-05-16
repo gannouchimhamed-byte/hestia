@@ -1888,6 +1888,19 @@
             loadCalendarFromDB();
         }
 
+
+        // ── XSS Protection ────────────────────────────────────────
+        function esc(str) {
+            if (str == null) return '';
+            return String(str)
+                .replace(/&/g,'&amp;')
+                .replace(/</g,'&lt;')
+                .replace(/>/g,'&gt;')
+                .replace(/"/g,'&quot;')
+                .replace(/'/g,'&#39;');
+        }
+
+
         function switchPage(page) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById('page-' + page).classList.add('active');
@@ -1982,8 +1995,8 @@
                         <div class="lead-name">
                             <div class="lead-avatar">${lead.avatar}</div>
                             <div class="lead-info">
-                                <h4>${lead.firstName} ${lead.lastName} <span class="score-badge ${tier}" style="margin-left:4px;">${icon} ${tier}</span></h4>
-                                <p>${lead.phone}</p>
+                                <h4>${esc(lead.firstName)} ${esc(lead.lastName)} <span class="score-badge ${tier}" style="margin-left:4px;">${icon} ${tier}</span></h4>
+                                <p>${esc(lead.phone)}</p>
                             </div>
                         </div>
                     </td>
@@ -1998,7 +2011,7 @@
                             <button class="action-btn whatsapp" onclick="event.stopPropagation(); openWhatsApp(${lead.id})" title="WhatsApp"><i class="fab fa-whatsapp"></i></button>
                             <button class="action-btn call" onclick="event.stopPropagation(); callLead(${lead.id})" title="Call"><i class="fas fa-phone"></i></button>
                             <button class="action-btn email" onclick="event.stopPropagation(); emailLead(${lead.id})" title="Email"><i class="fas fa-envelope"></i></button>
-                            <button class="action-btn" onclick="event.stopPropagation(); openDocManager('${lead.id}', '${lead.firstName} ${lead.lastName}')" title="Documents"><i class="fas fa-folder"></i></button>
+                            <button class="action-btn" onclick="event.stopPropagation(); openDocManager('${lead.id}', '${esc(lead.firstName)} ${esc(lead.lastName)}')" title="Documents"><i class="fas fa-folder"></i></button>
                         </div>
                     </td>
                 </tr>`;
@@ -2015,7 +2028,7 @@
             const hot = leads.filter(l => l.priority === 'high' && l.status !== 'closed' && l.status !== 'lost').slice(0, 5);
             document.getElementById('hotLeadsBody').innerHTML = hot.map(lead => `
                 <tr onclick="openLeadDetail(${lead.id})">
-                    <td><div class="lead-name"><div class="lead-avatar">${lead.avatar}</div><div class="lead-info"><h4>${lead.firstName} ${lead.lastName}</h4></div></div></td>
+                    <td><div class="lead-name"><div class="lead-avatar">${lead.avatar}</div><div class="lead-info"><h4>${esc(lead.firstName)} ${esc(lead.lastName)}</h4></div></div></td>
                     <td>${lead.property || '-'}</td>
                     <td><span class="status ${lead.status}">${lead.status}</span></td>
                     <td>${formatDate(lead.lastContact)}</td>
@@ -2042,8 +2055,8 @@
                 <div class="lead-detail-header">
                     <div class="lead-detail-avatar">${lead.avatar}</div>
                     <div class="lead-detail-info">
-                        <h2>${lead.firstName} ${lead.lastName}</h2>
-                        <p><i class="fas fa-phone"></i> ${lead.phone} &nbsp;|&nbsp; <i class="fas fa-envelope"></i> ${lead.email || 'No email'}</p>
+                        <h2>${esc(lead.firstName)} ${esc(lead.lastName)}</h2>
+                        <p><i class="fas fa-phone"></i> ${esc(lead.phone)} &nbsp;|&nbsp; <i class="fas fa-envelope"></i> ${lead.email || 'No email'}</p>
                     </div>
                 </div>
                 <div class="lead-detail-grid">
@@ -2143,7 +2156,7 @@
             const cleanPhone = lead.phone.replace(/\D/g, '').replace(/^216/, '');
             const waUrl = `https://wa.me/216${cleanPhone}`;
             window.open(waUrl, '_blank');
-            showToast(`Opening WhatsApp chat with ${lead.firstName}...`, 'success');
+            showToast(`Opening WhatsApp chat with ${esc(lead.firstName)}...`, 'success');
         }
 
         function whatsappCurrentLead() {
@@ -2154,7 +2167,7 @@
             const lead = leads.find(l => l.id === leadId);
             if (!lead) return;
             window.location.href = `tel:${lead.phone.replace(/\s/g, '')}`;
-            showToast(`Calling ${lead.firstName}...`, 'success');
+            showToast(`Calling ${esc(lead.firstName)}...`, 'success');
         }
 
         function callCurrentLead() {
@@ -2167,7 +2180,7 @@
                 showToast('No email address for this lead', 'warning');
                 return;
             }
-            window.location.href = `mailto:${lead.email}`;
+            window.location.href = `mailto:${esc(lead.email)}`;
         }
 
         function editLead(leadId) {
@@ -2263,7 +2276,7 @@
                         </div>
                         ${stageLeads.map(lead => `
                             <div class="pipeline-card" draggable="true" ondragstart="drag(event, ${lead.id})" onclick="openLeadDetail(${lead.id})">
-                                <h5>${lead.firstName} ${lead.lastName}</h5>
+                                <h5>${esc(lead.firstName)} ${esc(lead.lastName)}</h5>
                                 <p>${lead.property || 'No property'}</p>
                                 <div class="pipeline-card-footer">
                                     <span class="pipeline-card-price">${lead.priority === 'high' ? '<i class="fas fa-flag" style="color: var(--danger);"></i>' : ''}</span>
@@ -2294,20 +2307,28 @@
             ev.currentTarget.classList.remove('drag-over');
         }
 
-        function drop(ev) {
+        async function drop(ev) {
             ev.preventDefault();
             ev.currentTarget.classList.remove('drag-over');
-            const leadId = parseInt(ev.dataTransfer.getData('leadId'));
+            const leadId = ev.dataTransfer.getData('leadId');
             const newStage = ev.currentTarget.dataset.stage;
 
-            const lead = leads.find(l => l.id === leadId);
+            const lead = leads.find(l => String(l.id) === String(leadId));
             if (lead && lead.status !== newStage) {
                 lead.status = newStage;
                 lead.lastContact = new Date().toISOString().slice(0, 16).replace('T', ' ');
-                showToast(`${lead.firstName} moved to ${newStage}`, 'success');
                 renderPipeline();
                 renderLeadsTable();
                 renderHotLeads();
+                // Persist to Supabase
+                if (agentUser && typeof lead.id === 'string' && lead.id.includes('-')) {
+                    const { error } = await sb.from('leads')
+                        .update({ status: newStage, updated_at: new Date().toISOString() })
+                        .eq('id', lead.id);
+                    showToast(error ? 'Move failed: ' + error.message : `${esc(lead.firstName)} moved to ${newStage}`, error ? 'error' : 'success');
+                } else {
+                    showToast(`${lead.firstName || 'Lead'} moved to ${newStage}`, 'success');
+                }
             }
 
             document.querySelectorAll('.pipeline-card.dragging').forEach(c => c.classList.remove('dragging'));
@@ -2326,7 +2347,7 @@
                         <div class="message-thread-avatar">${lead.avatar}</div>
                         <div class="message-thread-info">
                             <div class="message-thread-header">
-                                <h4>${lead.firstName} ${lead.lastName}</h4>
+                                <h4>${esc(lead.firstName)} ${esc(lead.lastName)}</h4>
                                 <span>${lastMsg.time}</span>
                             </div>
                             <div class="message-thread-preview">${lastMsg.text.substring(0, 40)}${lastMsg.text.length > 40 ? '...' : ''}</div>
@@ -2343,7 +2364,7 @@
             if (!lead) return;
 
             document.getElementById('chatAvatar').textContent = lead.avatar;
-            document.getElementById('chatName').textContent = `${lead.firstName} ${lead.lastName}`;
+            document.getElementById('chatName').textContent = `${esc(lead.firstName)} ${esc(lead.lastName)}`;
             document.getElementById('chatStatus').innerHTML = `<i class="fas fa-circle" style="color: var(--success); font-size: 0.6rem;"></i> Online`;
 
             const msgs = messages[leadId] || [];
@@ -2354,7 +2375,7 @@
                     <div class="empty-state">
                         <i class="fab fa-whatsapp" style="color: var(--whatsapp);"></i>
                         <h3>Start Conversation</h3>
-                        <p>No messages yet. Send a message to ${lead.firstName} to get started.</p>
+                        <p>No messages yet. Send a message to ${esc(lead.firstName)} to get started.</p>
                     </div>
                 `;
             } else {
@@ -2450,7 +2471,7 @@
                         <div class="message-thread-avatar">${lead.avatar}</div>
                         <div class="message-thread-info">
                             <div class="message-thread-header">
-                                <h4>${lead.firstName} ${lead.lastName}</h4>
+                                <h4>${esc(lead.firstName)} ${esc(lead.lastName)}</h4>
                                 <span>${lastMsg.time}</span>
                             </div>
                             <div class="message-thread-preview">${lastMsg.text.substring(0, 40)}...</div>
@@ -2559,7 +2580,7 @@
                 return `
                 <div class="property-card">
                     <div class="property-card-image">
-                        <img src="${prop.image}" alt="${prop.title}">
+                        <img src="${prop.image}" alt="${esc(prop.title)}">
                         <span class="property-card-badge ${prop.type}">${prop.type === 'sale' ? 'For Sale' : 'For Rent'}</span>
                         <span class="property-card-status">${prop.status === 'active' ? 'Active' : 'Sold'}</span>
                     </div>
@@ -2568,8 +2589,8 @@
                             <div class="property-card-price">${prop.price >= 1000 ? prop.price.toLocaleString() + ' TND' : prop.price + ' TND/mo'}</div>
                             ${boosted ? `<span class="boost-active"><i class="fas fa-rocket"></i> Boosted</span>` : ''}
                         </div>
-                        <div class="property-card-title">${prop.title}</div>
-                        <div class="property-card-location"><i class="fas fa-map-marker-alt"></i> ${prop.area}, ${prop.city}</div>
+                        <div class="property-card-title">${esc(prop.title)}</div>
+                        <div class="property-card-location"><i class="fas fa-map-marker-alt"></i> ${prop.area}, ${esc(prop.city)}</div>
                         <div class="property-card-stats">
                             <span><i class="fas fa-bed"></i> ${prop.beds} Beds</span>
                             <span><i class="fas fa-bath"></i> ${prop.baths} Baths</span>
@@ -2583,7 +2604,7 @@
                     <div class="property-card-footer">
                         <button class="btn btn-light btn-sm" onclick="openListingAnalytics(${prop.id}, '${prop.title.replace(/'/g,"\\'")}')"><i class="fas fa-chart-bar"></i> Analytics</button>
                         <button class="btn btn-sm" style="background:var(--accent-soft);color:#92400e;" onclick="openBoostModal(${prop.id}, '${prop.title.replace(/'/g,"\\'")}')"><i class="fas fa-rocket"></i> Boost</button>
-                        <button class="btn btn-ghost btn-sm" onclick="showToast('Editing ${prop.title}')"><i class="fas fa-edit"></i></button>
+                        <button class="btn btn-ghost btn-sm" onclick="showToast('Editing ${esc(prop.title)}')"><i class="fas fa-edit"></i></button>
                     </div>
                 </div>`;
             }).join('');
@@ -2651,9 +2672,9 @@
             grid.innerHTML = teamMembers.map(m => `
                 <div class="team-card">
                     <div class="team-card-header">
-                        <div class="team-avatar"><img src="${m.img}" alt="${m.name}" onerror="this.parentElement.textContent='${m.initials}'"></div>
+                        <div class="team-avatar"><img src="${m.img}" alt="${esc(m.name)}" onerror="this.parentElement.textContent='${m.initials}'"></div>
                         <div>
-                            <div class="team-member-name">${m.name}</div>
+                            <div class="team-member-name">${esc(m.name)}</div>
                             <div class="team-member-role">${m.role}</div>
                         </div>
                     </div>
@@ -2663,8 +2684,8 @@
                         <div class="team-stat"><div class="team-stat-val">${m.revenue}</div><div class="team-stat-lbl">Rev TND</div></div>
                     </div>
                     <div class="team-actions">
-                        <button class="btn btn-light btn-sm" onclick="showToast('Opening ${m.name}\\'s pipeline')"><i class="fas fa-stream"></i> Pipeline</button>
-                        <button class="btn btn-ghost btn-sm" onclick="showToast('Assigning lead to ${m.name}')"><i class="fas fa-user-plus"></i> Assign</button>
+                        <button class="btn btn-light btn-sm" onclick="showToast('Opening ${esc(m.name)}\\'s pipeline')"><i class="fas fa-stream"></i> Pipeline</button>
+                        <button class="btn btn-ghost btn-sm" onclick="showToast('Assigning lead to ${esc(m.name)}')"><i class="fas fa-user-plus"></i> Assign</button>
                     </div>
                 </div>
             `).join('');

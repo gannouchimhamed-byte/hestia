@@ -73,6 +73,14 @@ export default function PropertyDetail() {
     </div>
   )
 
+  // Dynamic page title + meta description
+  useEffect(() => {
+    if (!p) return
+    document.title = `${p.title} — ${p.city} | Hestia`
+    const desc = document.querySelector('meta[name="description"]')
+    if (desc) desc.setAttribute('content', `${p.price} · ${p.beds} bed · ${p.area}m² · ${p.location}`)
+  }, [p])
+
   const similar = properties
     .filter(s => String(s.id) !== String(p.id) && s.city === p.city && s.type === p.type)
     .sort((a,b) => Math.abs(a.priceValue-p.priceValue) - Math.abs(b.priceValue-p.priceValue))
