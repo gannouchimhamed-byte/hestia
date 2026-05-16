@@ -22,6 +22,7 @@ import Account from './pages/Account'
 import NotFound from './pages/NotFound'
 import Privacy from './pages/Privacy'
 import Terms from './pages/Terms'
+import About from './pages/About'
 
 export default function App() {
   return (
@@ -58,6 +59,7 @@ export default function App() {
               <Route path="health"   element={<AdminHealth />} />
               <Route path="broadcast" element={<AdminBroadcast />} />
             </Route>
+            <Route path="/about"    element={<><Navbar /><About /></>} />
             <Route path="/privacy" element={<><Navbar /><Privacy /></>} />
             <Route path="/terms"   element={<><Navbar /><Terms /></>} />
             <Route path="*" element={<NotFound />} />

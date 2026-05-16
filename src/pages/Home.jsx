@@ -544,7 +544,7 @@ export default function Home() {
             <div key={col.title}>
               <h4 className="font-bold mb-3 text-xs uppercase tracking-widest text-gray-400">{col.title}</h4>
               <ul className="space-y-2">
-                {col.links.map(l => <li key={l}><a href="#" className="text-gray-400 text-sm hover:text-white transition-colors">{l}</a></li>)}
+                {col.links.map((l, li) => <li key={l}><a href={col.title===t('footer.company')&&li===0?'/about':col.title===t('footer.support')&&li===1?'/privacy':col.title===t('footer.support')&&li===2?'/terms':'#'} className="text-gray-400 text-sm hover:text-white transition-colors">{l}</a></li>)}
               </ul>
             </div>
           ))}
